@@ -31,6 +31,9 @@ public class EventLogger {
         return instance;
     }
 
+    // log tag
+    private final static String TAG = "EventLogger";
+
     private final static String KEY_CAMPAIGN_URI = "campaignUrl";
     private final static String KEY_USER_ID = "userID";
 
@@ -179,10 +182,11 @@ public class EventLogger {
      * @param screenName screen name, i.e. fragment class name.
      */
     public synchronized void logScreen(String screenName) {
-        if (!enabled) return;
-
+        android.util.Log.d(TAG, "Log screen view, screen: " + screenName);
         this.screenName = screenName;
         lastScreenLogTime = System.currentTimeMillis();
+
+        if (!enabled) return;
 
         try {
             if (gaTracker != null) {
@@ -232,14 +236,16 @@ public class EventLogger {
      * @param duration   screen duration.
      */
     private void logScreenLife(final String screenName, final long duration) {
+        android.util.Log.d(TAG, "Log screen life, screen: " + screenName + ", duration: " + duration/1000. + "s.");
         if (!enabled) return;
 
         if (duration <= 0) return;
         try {
             if (firebaseAnalytics != null) {
                 Bundle bundle = new Bundle();
+                String[] names = screenName.split("\\.");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, names[names.length - 1]);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, EVENT_CATEGORY_SCREEN_LIFE);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, screenName);
                 bundle.putLong(FirebaseAnalytics.Param.VALUE, duration);
                 firebaseAnalytics.logEvent(EVENT_NAME_SCREEN, bundle);
             }
@@ -321,6 +327,7 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
+        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", itemName: " + itemName);
         if (!enabled) return;
 
         try {
@@ -367,6 +374,7 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value) {
+        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", itemName: " + itemName + ", value: " + value);
         if (!enabled) return;
 
         try {
