@@ -16,6 +16,8 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.crash.FirebaseCrash;
 
+import static android.R.attr.name;
+
 /**
  * Created by xiaocong on 16/10/8.
  */
@@ -41,7 +43,7 @@ public class EventLogger {
     private final static String EVENT_CATEGORY_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN_LIFE = "screen_life";
 
-    private final static String EVENT_NAME_USER_ACTION = "action";
+    private final static String EVENT_NAME_USER_ACTION = "user_action";
 
     // enable or disable event logger
     private boolean enabled = true;
@@ -266,20 +268,41 @@ public class EventLogger {
     /**
      * Log user action
      *
-     * @param actionName name of action
+     * @param itemName name of action
      */
-    public void logAction(final @NonNull String actionName) {
-        logAction(null, actionName);
+    public void logAction(final @NonNull String itemName) {
+        logAction(null, itemName);
     }
 
     /**
      * Log user action.
      *
      * @param category   event category
-     * @param actionName name of action
+     * @param itemName name of action
      */
-    public void logAction(final @Nullable String category, final @NonNull String actionName) {
-        logEvent(EVENT_NAME_USER_ACTION, category, actionName);
+    public void logAction(final @Nullable String category, final @NonNull String itemName) {
+        logEvent(EVENT_NAME_USER_ACTION, category, itemName);
+    }
+
+    /**
+     *
+     * @param category
+     * @param itemName
+     */
+    public void logPurchase(final @Nullable String category, final @NonNull String itemName) {
+        android.util.Log.d(TAG, "Log purchase event, category: " + category + ", name: " + itemName);
+        if (!enabled) return;
+
+        try {
+            if (firebaseAnalytics != null) {
+                Bundle bundle = new Bundle();
+                if (!TextUtils.isEmpty(category))
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, itemName);
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ECOMMERCE_PURCHASE, bundle);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -306,8 +329,8 @@ public class EventLogger {
      *
      * @param itemId item id to be viewed.
      */
-    public void logItemAction(final @NonNull String action, final @NonNull String itemId) {
-        logItemAction(action, null, itemId);
+    public void logItemAction(final @NonNull String eventName, final @NonNull String itemId) {
+        logItemAction(eventName, null, itemId);
     }
 
     /**
@@ -316,8 +339,8 @@ public class EventLogger {
      * @param category event category
      * @param itemId   item id to be viewed.
      */
-    public void logItemAction(final @NonNull String action, final @Nullable String category, final @NonNull String itemId) {
-        logEvent(action, category, itemId);
+    public void logItemAction(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemId) {
+        logEvent(eventName, category, itemId, true);
     }
 
     /**
@@ -327,7 +350,18 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
-        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", itemName: " + itemName);
+        logEvent(eventName, category, itemName, false);
+    }
+
+    /**
+     * Log common event.
+     *
+     * @param category event category
+     * @param itemName item id.
+     * @param isItem should use item id or not to send the event.
+     */
+    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
+        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", " + (isItem ? "itemId" : "itemName") + ": " + itemName);
         if (!enabled) return;
 
         try {
@@ -349,7 +383,7 @@ public class EventLogger {
                 Bundle bundle = new Bundle();
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, itemName);
+                bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
             }
         } catch (Exception ignored) {
