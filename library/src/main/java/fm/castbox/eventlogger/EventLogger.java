@@ -16,8 +16,6 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.crash.FirebaseCrash;
 
-import static android.R.attr.name;
-
 /**
  * Created by xiaocong on 16/10/8.
  */
@@ -38,6 +36,7 @@ public class EventLogger {
 
     private final static String KEY_CAMPAIGN_URI = "campaignUrl";
     private final static String KEY_USER_ID = "userID";
+    private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
 
     private final static String EVENT_NAME_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN = "screen";
@@ -64,7 +63,9 @@ public class EventLogger {
 
     // screen time
     private String screenName;
+    private String shortScreenName;
     private long lastScreenLogTime = 0L;
+    private long firstLaunchTime = 0L;
 
     private EventLogger() {
     }
@@ -100,7 +101,11 @@ public class EventLogger {
             String uid = sharedPreferences.getString(KEY_USER_ID, null);
             if (uid != null)
                 setUserId(uid);
+
         }
+        // to set the install time in case of not exist.
+        getInstallTime();
+
         return this;
     }
 
@@ -179,6 +184,20 @@ public class EventLogger {
     }
 
     /**
+     * get the time since installation.
+     * @return seconds
+     */
+    public long getInstallTime() {
+        long now = System.currentTimeMillis();
+        if (firstLaunchTime == 0L)
+            firstLaunchTime = sharedPreferences.getLong(KEY_FIRST_LAUNCH_DATE, now);
+        if (firstLaunchTime == now)
+            sharedPreferences.edit().putLong(KEY_FIRST_LAUNCH_DATE, now).apply();
+
+        return (long)((now - firstLaunchTime)/1000.);
+    }
+
+    /**
      * Enter a screen, mostly we use it to log entering fragment.
      *
      * @param screenName screen name, i.e. fragment class name.
@@ -205,7 +224,10 @@ public class EventLogger {
             if (firebaseAnalytics != null) {
                 Bundle bundle = new Bundle();
                 String[] names = screenName.split("\\.");
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, names[names.length - 1]);
+                shortScreenName = names[names.length - 1];
+                if (shortScreenName.length() > 36)
+                    shortScreenName = shortScreenName.substring(0, 36);
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, shortScreenName);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, EVENT_CATEGORY_SCREEN);
                 firebaseAnalytics.logEvent(EVENT_NAME_SCREEN, bundle);
             }
@@ -383,6 +405,10 @@ public class EventLogger {
                 Bundle bundle = new Bundle();
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
+                if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
+                    bundle.putString("screen", shortScreenName);
+                    android.util.Log.d(TAG, "user_action on screen " + shortScreenName);
+                }
                 bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
             }
