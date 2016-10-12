@@ -1,5 +1,6 @@
 package fm.castbox.eventlogger;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -70,15 +71,15 @@ public class EventLogger {
     private EventLogger() {
     }
 
-    public EventLogger init(Context context) {
-        sharedPreferences = context.getSharedPreferences("EventLogger", Context.MODE_PRIVATE);
+    public EventLogger init(@NonNull Application application) {
+        sharedPreferences = application.getSharedPreferences("EventLogger", Context.MODE_PRIVATE);
 
         if (enabled) {
             campaignUrl = sharedPreferences.getString(KEY_CAMPAIGN_URI, null);
 
             // ga
             if (googleAnalyticsStringId != null || googleAnalyticsResId > 0) {
-                GoogleAnalytics analytics = GoogleAnalytics.getInstance(context);
+                GoogleAnalytics analytics = GoogleAnalytics.getInstance(application);
                 // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
                 if (googleAnalyticsResId > 0)
                     gaTracker = analytics.newTracker(googleAnalyticsResId);
@@ -91,12 +92,14 @@ public class EventLogger {
             }
             // firebase
             if (enableFirebaseAnalytics) {
-                firebaseAnalytics = FirebaseAnalytics.getInstance(context);
+                firebaseAnalytics = FirebaseAnalytics.getInstance(application);
                 firebaseAnalytics.setAnalyticsCollectionEnabled(true);
             }
             // fan
-            if (enableFacebookAnalytics)
-                facebookEventsLogger = AppEventsLogger.newLogger(context);
+            if (enableFacebookAnalytics) {
+                AppEventsLogger.activateApp(application);
+                facebookEventsLogger = AppEventsLogger.newLogger(application);
+            }
 
             String uid = sharedPreferences.getString(KEY_USER_ID, null);
             if (uid != null)
