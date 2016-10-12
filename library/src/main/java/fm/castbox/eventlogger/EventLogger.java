@@ -17,6 +17,8 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.crash.FirebaseCrash;
 
+import timber.log.Timber;
+
 /**
  * Created by xiaocong on 16/10/8.
  */
@@ -206,7 +208,7 @@ public class EventLogger {
      * @param screenName screen name, i.e. fragment class name.
      */
     public synchronized void logScreen(String screenName) {
-        android.util.Log.d(TAG, "Log screen view, screen: " + screenName);
+        Timber.d("Log screen view, screen=%s.", screenName);
         this.screenName = screenName;
         lastScreenLogTime = System.currentTimeMillis();
 
@@ -263,7 +265,7 @@ public class EventLogger {
      * @param duration   screen duration.
      */
     private void logScreenLife(final String screenName, final long duration) {
-        android.util.Log.d(TAG, "Log screen life, screen: " + screenName + ", duration: " + duration/1000. + "s.");
+        Timber.d("Log screen life, screen=%s, duration=%ds.", screenName, duration/1000. );
         if (!enabled) return;
 
         if (duration <= 0) return;
@@ -315,7 +317,7 @@ public class EventLogger {
      * @param itemName
      */
     public void logPurchase(final @Nullable String category, final @NonNull String itemName) {
-        android.util.Log.d(TAG, "Log purchase event, category: " + category + ", name: " + itemName);
+        Timber.d("Log purchase event, category=%s, name=%s", category, itemName);
         if (!enabled) return;
 
         try {
@@ -386,7 +388,8 @@ public class EventLogger {
      * @param isItem should use item id or not to send the event.
      */
     private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
-        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", " + (isItem ? "itemId" : "itemName") + ": " + itemName);
+        Timber.d("Log event: event name=%s, category=%s, %s=%s", eventName, category, isItem ? "itemId" : "itemName", itemName);
+        if (!enabled) return;
         if (!enabled) return;
 
         try {
@@ -410,7 +413,6 @@ public class EventLogger {
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
                 if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
                     bundle.putString("screen", shortScreenName);
-                    android.util.Log.d(TAG, "user_action on screen " + shortScreenName);
                 }
                 bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
@@ -437,7 +439,7 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value) {
-        android.util.Log.d(TAG, "Log event, event name: " + eventName + ", category: " + category + ", itemName: " + itemName + ", value: " + value);
+        Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d.", eventName, category, itemName, value);
         if (!enabled) return;
 
         try {
@@ -520,6 +522,7 @@ public class EventLogger {
      * @param userId user id. null to remove the user id from event logger.
      */
     public void setUserId(final String userId) {
+        Timber.d("Log event: set user id=%s", userId);
         if (!enabled) return;
 
         try {
