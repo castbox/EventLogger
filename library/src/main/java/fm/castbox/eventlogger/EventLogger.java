@@ -390,7 +390,6 @@ public class EventLogger {
     private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
         Timber.d("Log event: event name=%s, category=%s, %s=%s", eventName, category, isItem ? "itemId" : "itemName", itemName);
         if (!enabled) return;
-        if (!enabled) return;
 
         try {
             if (gaTracker != null) {
