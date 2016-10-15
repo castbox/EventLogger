@@ -13,7 +13,11 @@ public class CampaignTrackingReceiver extends com.google.android.gms.analytics.C
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        EventLogger.getInstance().logEvent("store", PLAY_STORE_REFERRER_KEY, intent.getStringExtra(PLAY_STORE_REFERRER_KEY));
+        if (intent.hasExtra(PLAY_STORE_REFERRER_KEY)) {
+            String url = intent.getStringExtra(PLAY_STORE_REFERRER_KEY);
+            EventLogger.getInstance().logEvent("store", PLAY_STORE_REFERRER_KEY, url);
+            EventLogger.getInstance().setCampaignParams(url);
+        }
 
         super.onReceive(context, intent);
     }
