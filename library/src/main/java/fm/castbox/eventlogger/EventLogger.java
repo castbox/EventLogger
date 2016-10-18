@@ -267,7 +267,7 @@ public class EventLogger {
      * @param duration   screen duration.
      */
     private void logScreenLife(final String screenName, final long duration) {
-        Timber.d("Log screen life, screen=%s, duration=%ds.", screenName, duration/1000. );
+//        Timber.d("Log screen life, screen=%s, duration=%ds.", screenName, duration/1000. );
         if (!enabled) return;
 
         if (duration <= 0) return;
