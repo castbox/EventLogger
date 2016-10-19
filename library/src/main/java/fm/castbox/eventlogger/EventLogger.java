@@ -34,9 +34,6 @@ public class EventLogger {
         return instance;
     }
 
-    // log tag
-    private final static String TAG = "EventLogger";
-
     private final static String KEY_CAMPAIGN_URI = "campaignUrl";
     private final static String KEY_USER_ID = "userID";
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
@@ -201,7 +198,7 @@ public class EventLogger {
         if (firstLaunchTime == now)
             sharedPreferences.edit().putLong(KEY_FIRST_LAUNCH_DATE, now).apply();
 
-        return (long)((now - firstLaunchTime)/1000.);
+        return Math.abs((long)((now - firstLaunchTime)/1000.));
     }
 
     /**
@@ -508,6 +505,7 @@ public class EventLogger {
      * @param value property value.
      */
     public void setUserProperty(final @NonNull String key, final @Nullable String value) {
+        Timber.d("Log event: set user property %s=%s", key, value);
         if (!enabled) return;
 
         try {
