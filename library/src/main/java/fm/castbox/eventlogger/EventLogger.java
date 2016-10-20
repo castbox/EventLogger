@@ -35,7 +35,6 @@ public class EventLogger {
     }
 
     private final static String KEY_CAMPAIGN_URI = "campaignUrl";
-    private final static String KEY_USER_ID = "userID";
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
 
     private final static String EVENT_NAME_SCREEN = "screen";
@@ -99,11 +98,6 @@ public class EventLogger {
                 AppEventsLogger.activateApp(application);
                 facebookEventsLogger = AppEventsLogger.newLogger(application);
             }
-
-            String uid = sharedPreferences.getString(KEY_USER_ID, null);
-            if (uid != null)
-                setUserId(uid);
-
         }
         // to set the install time in case of not exist.
         getInstallTime();
@@ -528,8 +522,6 @@ public class EventLogger {
             if (firebaseAnalytics != null) {
                 firebaseAnalytics.setUserId(userId);
             }
-
-            sharedPreferences.edit().putString(KEY_USER_ID, userId).apply();
         } catch (Exception ignored) {
         }
     }
