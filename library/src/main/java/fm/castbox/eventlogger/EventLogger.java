@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsConstants;
 import com.facebook.appevents.AppEventsLogger;
 import com.google.android.gms.analytics.GoogleAnalytics;
@@ -95,6 +96,9 @@ public class EventLogger {
             }
             // fan
             if (enableFacebookAnalytics) {
+                if (!FacebookSdk.isInitialized())
+                    FacebookSdk.sdkInitialize(application);
+                AppEventsLogger.activateApp(application);
                 AppEventsLogger.activateApp(application);
                 facebookEventsLogger = AppEventsLogger.newLogger(application);
             }
