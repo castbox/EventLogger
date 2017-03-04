@@ -21,18 +21,24 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     // google analytics
-    compile 'com.google.android.gms:play-services-analytics:10.0.1'
+    compile 'com.google.android.gms:play-services-analytics:10.2.0'
     // firebase analytics
-    compile 'com.google.firebase:firebase-core:10.0.1'
-    compile 'com.google.firebase:firebase-crash:10.0.1'
+    compile 'com.google.firebase:firebase-core:10.2.0'
+    compile 'com.google.firebase:firebase-crash:10.2.0'
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.android.support:animated-vector-drawable:25.2.0'
+    compile 'com.android.support:customtabs:25.2.0'
     // facebook analytics
-    compile 'com.facebook.android:facebook-android-sdk:4.14.0'
+    compile('com.facebook.android:facebook-android-sdk:4.14.0') {
+        exclude group: 'com.android.support', module: 'appcompat-v7'
+        exclude group: 'com.android.support', module: 'animated-vector-drawable'
+        exclude group: 'com.android.support', module: 'customtabs'
+    }
 
     compile 'com.jakewharton.timber:timber:4.1.0'
 
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.0.1'
     testCompile 'junit:junit:4.12'
 }
