@@ -97,10 +97,11 @@ public class EventLogger {
             }
             // fan
             if (enableFacebookAnalytics) {
-                if (!FacebookSdk.isInitialized())
-                    FacebookSdk.sdkInitialize(application);
-                AppEventsLogger.activateApp(application);
-                AppEventsLogger.activateApp(application);
+                // disabled since v4.19.0
+                //if (!FacebookSdk.isInitialized())
+                //    FacebookSdk.sdkInitialize(application);
+                //AppEventsLogger.activateApp(application);
+                //AppEventsLogger.activateApp(application);
                 facebookEventsLogger = AppEventsLogger.newLogger(application);
             }
         }
