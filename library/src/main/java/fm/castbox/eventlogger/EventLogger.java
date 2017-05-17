@@ -35,6 +35,10 @@ public class EventLogger {
     }
 
     private final static String KEY_CAMPAIGN_URI = "campaignUrl";
+    private final static String KEY_CAMPAIGN_UTM_SOURCE = "utm_source";
+    private final static String KEY_CAMPAIGN_UTM_MEDIUM = "utm_medium";
+    private final static String KEY_CAMPAIGN_UTM_CAMPAIGN = "utm_campaign";
+
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
 
     private final static String EVENT_NAME_SCREEN = "screen";
@@ -60,6 +64,7 @@ public class EventLogger {
 
     // campaign params
     private String campaignUrl;
+    private String utmSource;
 
     // screen time
     private String screenName;
@@ -75,6 +80,7 @@ public class EventLogger {
 
         if (enabled) {
             campaignUrl = sharedPreferences.getString(KEY_CAMPAIGN_URI, null);
+            utmSource = sharedPreferences.getString(KEY_CAMPAIGN_UTM_SOURCE, null);
 
             // ga
             if (googleAnalyticsStringId != null || googleAnalyticsResId > 0) {
@@ -158,9 +164,44 @@ public class EventLogger {
     public void setCampaignParams(String url) {
         try {
             setCampaignParams(Uri.parse(url));
+            if (url != null) {
+                logUtm(Uri.parse(url));
+            }
         } catch (Exception ignored) {
         }
     }
+
+    private void logUtm(Uri uri) {
+        Timber.d("logUtm, uri=%s, enabled=%b, utmSource=%s", uri.toString(), enabled, utmSource);
+
+        if (!enabled || !TextUtils.isEmpty(utmSource)) {
+            return;
+        }
+
+        try {
+            final String utmSource = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_SOURCE));
+            final String utmMedium = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_MEDIUM));
+            final String utmCampaign = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_CAMPAIGN));
+
+            Timber.d("utm_source=%s, utm_campaign=%s, utm_medium=%s", utmSource, utmCampaign, utmMedium);
+
+            sharedPreferences.edit().putString(KEY_CAMPAIGN_UTM_SOURCE, utmSource)
+                    .putString(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium)
+                    .putString(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign)
+                    .apply();
+
+            setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
+            setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
+            setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
+
+        } catch (Exception ignore) {
+        }
+    }
+
+    private String getUtmValue(String value) {
+        return value == null ? "unknown" : value;
+    }
+
 
     public void setCampaignParams(Uri uri) {
         if (!enabled || gaTracker == null || !TextUtils.isEmpty(campaignUrl)) return;
