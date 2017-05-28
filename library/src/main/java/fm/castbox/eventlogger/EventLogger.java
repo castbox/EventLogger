@@ -252,6 +252,10 @@ public class EventLogger {
      */
     public synchronized void logScreen(String screenName) {
         Timber.d("Log screen view, screen=%s.", screenName);
+        // Last event hasn't called logScreenPause, do it first
+        if (lastScreenLogTime != 0) {
+            logScreenPause(this.screenName);
+        }
         this.screenName = screenName;
         lastScreenLogTime = System.currentTimeMillis();
 
@@ -296,9 +300,9 @@ public class EventLogger {
     public synchronized void logScreenPause(final String screenName) {
         if (TextUtils.equals(this.screenName, screenName)) {
             logScreenLife(screenName, System.currentTimeMillis() - lastScreenLogTime);
+            this.screenName = null;
+            this.lastScreenLogTime = 0L;
         }
-        this.screenName = null;
-        this.lastScreenLogTime = 0L;
     }
 
     /**
