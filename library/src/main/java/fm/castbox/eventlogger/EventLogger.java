@@ -225,8 +225,6 @@ public class EventLogger {
             if (!TextUtils.isEmpty(campaignUrl)) {
                 sharedPreferences.edit().putString(KEY_CAMPAIGN_URI, campaignUrl).apply();
             }
-
-            logEvent("launch", "uri", uri.toString());
         } catch (Exception ignored) {
         }
     }
