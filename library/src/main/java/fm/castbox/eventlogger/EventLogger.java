@@ -179,7 +179,7 @@ public class EventLogger {
         }
 
         try {
-            final String utmSource = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_SOURCE));
+            utmSource = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_SOURCE));
             final String utmMedium = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_MEDIUM));
             final String utmCampaign = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_CAMPAIGN));
 
