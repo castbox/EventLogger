@@ -3,7 +3,6 @@ package fm.castbox.eventlogger;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,6 +15,10 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.crash.FirebaseCrash;
+
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
 
 import timber.log.Timber;
 
@@ -34,10 +37,13 @@ public class EventLogger {
         return instance;
     }
 
-    private final static String KEY_CAMPAIGN_URI = "campaignUrl";
     private final static String KEY_CAMPAIGN_UTM_SOURCE = "utm_source";
     private final static String KEY_CAMPAIGN_UTM_MEDIUM = "utm_medium";
     private final static String KEY_CAMPAIGN_UTM_CAMPAIGN = "utm_campaign";
+
+    static final String PLAY_STORE_REFERRER_KEY = "referrer";
+    static final String PLAY_STORE = "store";
+    private static final String PLAY_STORE_ATTRIBUTION_KEY = "attribution";
 
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
 
@@ -62,10 +68,6 @@ public class EventLogger {
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
     private AppEventsLogger facebookEventsLogger; // Facebook event logger
 
-    // campaign params
-    private String campaignUrl;
-    private String utmSource;
-
     // screen time
     private String screenName;
     private String shortScreenName;
@@ -79,9 +81,6 @@ public class EventLogger {
         sharedPreferences = application.getSharedPreferences("EventLogger", Context.MODE_PRIVATE);
 
         if (enabled) {
-            campaignUrl = sharedPreferences.getString(KEY_CAMPAIGN_URI, null);
-            utmSource = sharedPreferences.getString(KEY_CAMPAIGN_UTM_SOURCE, null);
-
             // ga
             if (googleAnalyticsStringId != null || googleAnalyticsResId > 0) {
                 GoogleAnalytics analytics = GoogleAnalytics.getInstance(application);
@@ -161,72 +160,74 @@ public class EventLogger {
         return facebookEventsLogger;
     }
 
-    public void setCampaignParams(String url) {
+    public void setCampaignParams(@NonNull String url) {
         try {
-            setCampaignParams(Uri.parse(url));
-            if (url != null) {
-                logUtm(Uri.parse(url));
-            }
+            logUtm(getQueryParameters(url));
         } catch (Exception ignored) {
         }
     }
 
-    private void logUtm(Uri uri) {
-        Timber.d("logUtm, uri=%s, enabled=%b, utmSource=%s", uri.toString(), enabled, utmSource);
-
-        if (!enabled || !TextUtils.isEmpty(utmSource)) {
+    private void logUtm(Map<String, String> queries) {
+        if (!enabled) {
             return;
         }
 
         try {
-            utmSource = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_SOURCE));
-            final String utmMedium = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_MEDIUM));
-            final String utmCampaign = getUtmValue(uri.getQueryParameter(KEY_CAMPAIGN_UTM_CAMPAIGN));
+            final String utmSource = queries.get(KEY_CAMPAIGN_UTM_SOURCE);
+            final String utmMedium = queries.get(KEY_CAMPAIGN_UTM_MEDIUM);
+            final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
 
             Timber.d("utm_source=%s, utm_campaign=%s, utm_medium=%s", utmSource, utmCampaign, utmMedium);
+            if (!TextUtils.isEmpty(utmSource))
+                setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
+            if (!TextUtils.isEmpty(utmMedium))
+                setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
+            if (!TextUtils.isEmpty(utmCampaign))
+                setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
 
-            sharedPreferences.edit().putString(KEY_CAMPAIGN_UTM_SOURCE, utmSource)
-                    .putString(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium)
-                    .putString(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign)
-                    .apply();
-
-            setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
-            setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
-            setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
+            final String utmTerm = queries.get("utm_term");
+            final String keyword = queries.get("keyword");
+            if (TextUtils.isEmpty(utmSource) && TextUtils.isEmpty(utmMedium)) {
+                if (!TextUtils.isEmpty(keyword)) {
+                    EventLogger.getInstance().logEvent(PLAY_STORE, "keyword", keyword);
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, "google.adwords");
+                }
+            } else if (!TextUtils.isEmpty(utmSource)) {
+                if (TextUtils.isEmpty(utmMedium))
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource);
+                else
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource + "." + utmMedium);
+                if (!TextUtils.isEmpty(utmTerm))
+                    EventLogger.getInstance().logEvent(PLAY_STORE, "term", utmTerm);
+            }
 
         } catch (Exception ignore) {
         }
     }
 
-    private String getUtmValue(String value) {
-        return value == null ? "unknown" : value;
-    }
-
-
-    public void setCampaignParams(Uri uri) {
-        if (!enabled || gaTracker == null || !TextUtils.isEmpty(campaignUrl)) return;
-
-        try {
-            if (uri.getQueryParameter("utm_source") != null) {
-                campaignUrl = uri.toString();
-            } else if (uri.getQueryParameter("target_url") != null) {
-                Uri targetUrl = Uri.parse(Uri.decode(uri.getQueryParameter("target_url")));
-                if (targetUrl.getQueryParameter("utm_source") != null) {
-                    campaignUrl = targetUrl.toString();
-                }
-            } else if (uri.getQueryParameter("referrer") != null) {
-                String referrer = Uri.decode(uri.getQueryParameter("referrer"));
-                if (referrer.contains("utm_source=")) {
-                    campaignUrl = referrer;
-                }
-            }
-
-            // save for going forward launch
-            if (!TextUtils.isEmpty(campaignUrl)) {
-                sharedPreferences.edit().putString(KEY_CAMPAIGN_URI, campaignUrl).apply();
-            }
-        } catch (Exception ignored) {
+    private static Map<String, String> getQueryParameters(@NonNull String query) {
+        if (query.startsWith("http://") || query.startsWith("https://")) {
+            String[] pairs = query.split("\\?");
+            if (pairs.length > 1)
+                query = pairs[1];
+            else
+                query = "";
         }
+
+        final Map<String, String> params = new HashMap<>();
+        for (String param : query.split("&")) {
+            String pair[] = param.split("=");
+            try {
+                String key = URLDecoder.decode(pair[0], "UTF-8");
+                String value = "";
+                if (pair.length > 1) {
+                    value = URLDecoder.decode(pair[1], "UTF-8");
+                }
+                params.put(key, value);
+            } catch (Exception ignored) {
+            }
+        }
+        return params;
     }
 
     /**
@@ -262,10 +263,7 @@ public class EventLogger {
         try {
             if (gaTracker != null) {
                 gaTracker.setScreenName(screenName);
-                if (TextUtils.isEmpty(campaignUrl))
-                    gaTracker.send(new HitBuilders.ScreenViewBuilder().build());
-                else
-                    gaTracker.send(new HitBuilders.ScreenViewBuilder().setCampaignParamsFromUrl(campaignUrl).build());
+                gaTracker.send(new HitBuilders.ScreenViewBuilder().build());
             }
         } catch (Exception ignored) {
         }
@@ -441,8 +439,6 @@ public class EventLogger {
                 HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
                         .setCategory(eventName)
                         .setLabel(itemName);
-                if (!TextUtils.isEmpty(campaignUrl))
-                    builder.setCampaignParamsFromUrl(campaignUrl);
                 if (!TextUtils.isEmpty(category))
                     builder.setAction(category);
                 gaTracker.send(builder.build());
@@ -491,8 +487,6 @@ public class EventLogger {
                 HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
                         .setCategory(eventName)
                         .setValue(value);
-                if (!TextUtils.isEmpty(campaignUrl))
-                    builder.setCampaignParamsFromUrl(campaignUrl);
                 if (!TextUtils.isEmpty(category))
                     builder.setAction(category);
                 if (!TextUtils.isEmpty(itemName))
