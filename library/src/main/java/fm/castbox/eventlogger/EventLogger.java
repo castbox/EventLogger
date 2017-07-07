@@ -219,10 +219,7 @@ public class EventLogger {
             String pair[] = param.split("=");
             try {
                 String key = URLDecoder.decode(pair[0], "UTF-8");
-                String value = "";
-                if (pair.length > 1) {
-                    value = URLDecoder.decode(pair[1], "UTF-8");
-                }
+                String value = pair.length > 1 ? URLDecoder.decode(pair[1], "UTF-8") : "";
                 params.put(key, value);
             } catch (Exception ignored) {
             }
