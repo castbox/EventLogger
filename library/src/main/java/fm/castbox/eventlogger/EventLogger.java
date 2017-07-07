@@ -162,7 +162,8 @@ public class EventLogger {
 
     public void setCampaignParams(@NonNull String url) {
         try {
-            logUtm(getQueryParameters(url));
+            if (getInstallTime() < 24*3600L)  // allow to set utm in 1 day since installation.
+                logUtm(getQueryParameters(url));
         } catch (Exception ignored) {
         }
     }
@@ -178,31 +179,40 @@ public class EventLogger {
             final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
 
             Timber.d("utm_source=%s, utm_campaign=%s, utm_medium=%s", utmSource, utmCampaign, utmMedium);
-            if (!TextUtils.isEmpty(utmSource))
+            if (isValidUtm(utmSource))
                 setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
-            if (!TextUtils.isEmpty(utmMedium))
+            if (isValidUtm(utmMedium))
                 setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
-            if (!TextUtils.isEmpty(utmCampaign))
+            if (isValidUtm(utmCampaign))
                 setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
 
             final String utmTerm = queries.get("utm_term");
             final String keyword = queries.get("keyword");
-            if (TextUtils.isEmpty(utmSource) && TextUtils.isEmpty(utmMedium)) {
+            final String campaignId = queries.get("campaignid");
+            if (TextUtils.isEmpty(utmSource) && TextUtils.isEmpty(utmMedium) && TextUtils.isEmpty(utmCampaign)) {
+                if (!TextUtils.isEmpty(campaignId))
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, "google.cpc");
                 if (!TextUtils.isEmpty(keyword)) {
                     EventLogger.getInstance().logEvent(PLAY_STORE, "keyword", keyword);
-                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, "google.adwords");
                 }
             } else if (!TextUtils.isEmpty(utmSource)) {
-                if (TextUtils.isEmpty(utmMedium))
-                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource);
-                else
-                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource + "." + utmMedium);
-                if (!TextUtils.isEmpty(utmTerm))
-                    EventLogger.getInstance().logEvent(PLAY_STORE, "term", utmTerm);
+                // filter out "(not set)", which may be for dynamic link
+                if (isValidUtm(utmSource)) {
+                    if (isValidUtm(utmMedium))
+                        EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource + "." + utmMedium);
+                    else
+                        EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource);
+                    if (!TextUtils.isEmpty(utmTerm))
+                        EventLogger.getInstance().logEvent(PLAY_STORE, "term", utmTerm);
+                } else
+                    EventLogger.getInstance().logEvent(PLAY_STORE, "not_set", utmSource + "." + utmMedium);
             }
-
         } catch (Exception ignore) {
         }
+    }
+
+    private boolean isValidUtm(String utm) {
+        return !TextUtils.isEmpty(utm) && !TextUtils.equals(utm, "(not%20set)") && !TextUtils.equals(utm, "(not set)");
     }
 
     private static Map<String, String> getQueryParameters(@NonNull String query) {
