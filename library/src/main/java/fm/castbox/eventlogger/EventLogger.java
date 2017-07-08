@@ -162,13 +162,35 @@ public class EventLogger {
 
     public void setCampaignParams(@NonNull String url) {
         try {
-            if (getInstallTime() < 24*3600L)  // allow to set utm in 1 day since installation.
-                logUtm(getQueryParameters(url));
+            if (getInstallTime() < 24*3600L) {  // allow to set utm in 1 day since installation.
+                Map<String, String> queries = getQueryParameters(url);
+                setUtmProperties(queries);
+                logUtm(queries);
+            }
         } catch (Exception ignored) {
         }
     }
 
-    private void logUtm(Map<String, String> queries) {
+    public void setUtmProperties(@NonNull Map<String, String> queries) {
+        if (!enabled)
+            return;
+        try {
+            final String utmSource = queries.get(KEY_CAMPAIGN_UTM_SOURCE);
+            if (isValidUtm(utmSource))
+                setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
+
+            final String utmMedium = queries.get(KEY_CAMPAIGN_UTM_MEDIUM);
+            if (isValidUtm(utmMedium))
+                setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
+
+            final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
+            if (isValidUtm(utmCampaign))
+                setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void logUtm(@NonNull Map<String, String> queries) {
         if (!enabled) {
             return;
         }
@@ -179,13 +201,6 @@ public class EventLogger {
             final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
 
             Timber.d("utm_source=%s, utm_campaign=%s, utm_medium=%s", utmSource, utmCampaign, utmMedium);
-            if (isValidUtm(utmSource))
-                setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
-            if (isValidUtm(utmMedium))
-                setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
-            if (isValidUtm(utmCampaign))
-                setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
-
             final String utmTerm = queries.get("utm_term");
             final String keyword = queries.get("keyword");
             final String campaignId = queries.get("campaignid");
@@ -196,16 +211,12 @@ public class EventLogger {
                     EventLogger.getInstance().logEvent(PLAY_STORE, "keyword", keyword);
                 }
             } else if (!TextUtils.isEmpty(utmSource)) {
-                // filter out "(not set)", which may be for dynamic link
-                if (isValidUtm(utmSource)) {
-                    if (isValidUtm(utmMedium))
-                        EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource + "." + utmMedium);
-                    else
-                        EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource);
-                    if (!TextUtils.isEmpty(utmTerm))
-                        EventLogger.getInstance().logEvent(PLAY_STORE, "term", utmTerm);
-                } else
-                    EventLogger.getInstance().logEvent(PLAY_STORE, "not_set", utmSource + "." + utmMedium);
+                if (!TextUtils.isEmpty(utmMedium))
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource + "." + utmMedium);
+                else
+                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, utmSource);
+                if (!TextUtils.isEmpty(utmTerm))
+                    EventLogger.getInstance().logEvent(PLAY_STORE, "term", utmTerm);
             }
         } catch (Exception ignore) {
         }
