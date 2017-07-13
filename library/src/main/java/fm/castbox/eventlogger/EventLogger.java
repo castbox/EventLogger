@@ -205,8 +205,11 @@ public class EventLogger {
             final String keyword = queries.get("keyword");
             final String campaignId = queries.get("campaignid");
             if (TextUtils.isEmpty(utmSource) && TextUtils.isEmpty(utmMedium) && TextUtils.isEmpty(utmCampaign)) {
-                if (!TextUtils.isEmpty(campaignId))
+                if (!TextUtils.isEmpty(campaignId)) {
                     EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, "google.cpc");
+                    setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, "google");
+                    setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, "cpc");
+                }
                 if (!TextUtils.isEmpty(keyword)) {
                     EventLogger.getInstance().logEvent(PLAY_STORE, "keyword", keyword);
                 }
