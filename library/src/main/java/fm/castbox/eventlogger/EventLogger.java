@@ -238,6 +238,11 @@ public class EventLogger {
                 query = "";
         }
 
+        try {
+            query = URLDecoder.decode(query, "UTF-8");
+        } catch (Throwable ignored) {
+        }
+
         final Map<String, String> params = new HashMap<>();
         for (String param : query.split("&")) {
             String pair[] = param.split("=");
@@ -245,7 +250,7 @@ public class EventLogger {
                 String key = URLDecoder.decode(pair[0], "UTF-8");
                 String value = pair.length > 1 ? URLDecoder.decode(pair[1], "UTF-8") : "";
                 params.put(key, value);
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
             }
         }
         return params;
