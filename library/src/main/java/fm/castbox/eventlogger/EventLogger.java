@@ -323,7 +323,9 @@ public class EventLogger {
 
     public synchronized void logScreenPause(final String screenName) {
         if (TextUtils.equals(this.screenName, screenName)) {
-            logScreenLife(screenName, System.currentTimeMillis() - lastScreenLogTime);
+            long duration = System.currentTimeMillis() - lastScreenLogTime;
+            if (duration > 0 && duration <= 30 * 60 * 1000) // 0 < duration <= 30 minutes
+                logScreenLife(screenName, duration);
             this.screenName = null;
             this.lastScreenLogTime = 0L;
         }
