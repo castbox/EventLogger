@@ -61,7 +61,7 @@ public class EventLogger {
     private final static String EVENT_NAME_USER_ACTION = "user_action";
 
     @IntDef(flag = true,
-            value = {ReportChannelParameters.GP, ReportChannelParameters.FIREBASE, ReportChannelParameters.FACEBOOK, ReportChannelParameters.ALL})
+            value = {ReportChannelParameters.GP, ReportChannelParameters.FIREBASE, ReportChannelParameters.FACEBOOK, ReportChannelParameters.ALL, ReportChannelParameters.GP_IGNORE_LABEL})
     @Retention(RetentionPolicy.CLASS)
     @Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.ANNOTATION_TYPE})
     public @interface ReportChannelParameters {
@@ -69,6 +69,7 @@ public class EventLogger {
         int FIREBASE = 1 << 1;
         int FACEBOOK = 1 << 2;
         int ALL = GP | FIREBASE | FACEBOOK;
+        int GP_IGNORE_LABEL = (1 << 8) | ALL;
     }
 
     // enable or disable event logger
@@ -111,6 +112,7 @@ public class EventLogger {
                 gaTracker.enableAutoActivityTracking(false);
                 gaTracker.enableAdvertisingIdCollection(true);
                 gaTracker.setAnonymizeIp(true);
+                gaTracker.setSampleRate(10.0d);
             }
             // firebase
             if (enableFirebaseAnalytics) {
@@ -498,8 +500,10 @@ public class EventLogger {
             try {
                 if (gaTracker != null) {
                     HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
-                            .setCategory(eventName)
-                            .setLabel(itemName);
+                            .setCategory(eventName);
+                    if ((reportChannelParameters & ReportChannelParameters.GP_IGNORE_LABEL) != ReportChannelParameters.GP_IGNORE_LABEL) {
+                        builder.setLabel(itemName);
+                    }
                     if (!TextUtils.isEmpty(category))
                         builder.setAction(category);
                     gaTracker.send(builder.build());
