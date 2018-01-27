@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import timber.log.Timber;
 
@@ -49,28 +50,16 @@ public class EventLogger {
     private final static String KEY_CAMPAIGN_UTM_CAMPAIGN = "utm_campaign";
 
     static final String PLAY_STORE_REFERRER_KEY = "referrer";
-    static final String PLAY_STORE = "store";
+    public static final String PLAY_STORE = "store";
     private static final String PLAY_STORE_ATTRIBUTION_KEY = "attribution";
 
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
 
-    private final static String EVENT_NAME_SCREEN = "screen";
+    public final static String EVENT_NAME_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN_LIFE = "screen_life";
 
-    private final static String EVENT_NAME_USER_ACTION = "user_action";
-
-    @IntDef(flag = true,
-            value = {ReportChannelParameters.GP, ReportChannelParameters.FIREBASE, ReportChannelParameters.FACEBOOK, ReportChannelParameters.ALL, ReportChannelParameters.GP_IGNORE_LABEL})
-    @Retention(RetentionPolicy.CLASS)
-    @Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.ANNOTATION_TYPE})
-    public @interface ReportChannelParameters {
-        int GP = 1;
-        int FIREBASE = 1 << 1;
-        int FACEBOOK = 1 << 2;
-        int ALL = GP | FIREBASE | FACEBOOK;
-        int GP_IGNORE_LABEL = (1 << 8) | ALL;
-    }
+    public final static String EVENT_NAME_USER_ACTION = "user_action";
 
     // enable or disable event logger
     private boolean enabled = true;
@@ -86,6 +75,10 @@ public class EventLogger {
     private Tracker gaTracker;  // Google Analytics Tracker
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
     private AppEventsLogger facebookEventsLogger; // Facebook event logger
+
+    // event name filter
+    private Set<String> gaEventNameFilters;
+    private Set<String> facebookEventNameFilters;
 
     // screen time
     private String screenName;
@@ -112,7 +105,7 @@ public class EventLogger {
                 gaTracker.enableAutoActivityTracking(false);
                 gaTracker.enableAdvertisingIdCollection(true);
                 gaTracker.setAnonymizeIp(true);
-                gaTracker.setSampleRate(10.0d);
+                //gaTracker.setSampleRate(10.0d);
             }
             // firebase
             if (enableFirebaseAnalytics) {
@@ -140,14 +133,24 @@ public class EventLogger {
     }
 
     public EventLogger enableGoogleAnalytics(String id) {
+        return enableGoogleAnalytics(id, null);
+    }
+
+    public EventLogger enableGoogleAnalytics(String id, Set<String> filter) {
         // Google analytics
         googleAnalyticsStringId = id;
+        gaEventNameFilters = filter;
         return this;
     }
 
     public EventLogger enableGoogleAnalytics(int id) {
+        return enableGoogleAnalytics(id, null);
+    }
+
+    public EventLogger enableGoogleAnalytics(int id, Set<String> filter) {
         // Google analytics
         googleAnalyticsResId = id;
+        gaEventNameFilters = filter;
         return this;
     }
 
@@ -158,8 +161,13 @@ public class EventLogger {
     }
 
     public EventLogger enableFacebookAnalytics() {
+        return enableFacebookAnalytics(null);
+    }
+
+    public EventLogger enableFacebookAnalytics(Set<String> filter) {
         // facebook
         enableFacebookAnalytics = true;
+        facebookEventNameFilters = filter;
         return this;
     }
 
@@ -180,9 +188,21 @@ public class EventLogger {
         return facebookEventsLogger;
     }
 
+    private boolean gaEventLoggable(@NonNull String eventName) {
+        return eventLoggable(eventName, gaEventNameFilters);
+    }
+
+    private boolean facebookEventLoggable(@NonNull String eventName) {
+        return eventLoggable(eventName, facebookEventNameFilters);
+    }
+
+    private boolean eventLoggable(@NonNull String eventName, Set<String> filter) {
+        return filter == null || filter.contains(eventName);
+    }
+
     public void setCampaignParams(@NonNull String url) {
         try {
-            if (getInstallTime() < 24*3600L) {  // allow to set utm in 1 day since installation.
+            if (getInstallTime() < 24 * 3600L) {  // allow to set utm in 1 day since installation.
                 Map<String, String> queries = getQueryParameters(url);
                 setUtmProperties(queries);
                 logUtm(queries);
@@ -278,6 +298,7 @@ public class EventLogger {
 
     /**
      * get the time since installation.
+     *
      * @return seconds
      */
     public long getInstallTime() {
@@ -287,7 +308,7 @@ public class EventLogger {
         if (firstLaunchTime == now)
             sharedPreferences.edit().putLong(KEY_FIRST_LAUNCH_DATE, now).apply();
 
-        return Math.abs((long)((now - firstLaunchTime)/1000.));
+        return Math.abs((long) ((now - firstLaunchTime) / 1000.));
     }
 
     /**
@@ -307,7 +328,7 @@ public class EventLogger {
         if (!enabled) return;
 
         try {
-            if (gaTracker != null) {
+            if (gaTracker != null && gaEventLoggable(EVENT_NAME_SCREEN)) {
                 gaTracker.setScreenName(screenName);
                 gaTracker.send(new HitBuilders.ScreenViewBuilder().build());
             }
@@ -329,7 +350,7 @@ public class EventLogger {
         }
 
         try {
-            if (facebookEventsLogger != null) {
+            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
                 Bundle parameters = new Bundle();
                 parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN);
                 parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
@@ -373,7 +394,7 @@ public class EventLogger {
         }
 
         try {
-            if (facebookEventsLogger != null) {
+            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
                 Bundle parameters = new Bundle();
                 parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN_LIFE);
                 parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
@@ -395,7 +416,7 @@ public class EventLogger {
     /**
      * Log user action.
      *
-     * @param category   event category
+     * @param category event category
      * @param itemName name of action
      */
     public void logAction(final @Nullable String category, final @NonNull String itemName) {
@@ -403,17 +424,17 @@ public class EventLogger {
     }
 
     /**
-     *  Log user action.
-     * @param category   event category
-     * @param itemName   event itemName
-     * @param value      event value
+     * Log user action.
+     *
+     * @param category event category
+     * @param itemName event itemName
+     * @param value    event value
      */
     public void logAction(final @Nullable String category, final @NonNull String itemName, final long value) {
         logEventValue(EVENT_NAME_USER_ACTION, category, itemName, value);
     }
 
     /**
-     *
      * @param category
      * @param itemName
      */
@@ -465,11 +486,11 @@ public class EventLogger {
      * Log event performed on specified item.
      *
      * @param category event category
-     * @param itemName   item id to be viewed.
+     * @param itemName item id to be viewed.
      */
     public void logItemAction(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
 
-        logEvent(eventName, category, itemName, true, ReportChannelParameters.ALL);
+        logEvent(eventName, category, itemName, true);
     }
 
     /**
@@ -479,67 +500,7 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
-        logEvent(eventName, category, itemName, false, ReportChannelParameters.ALL);
-    }
-    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final @NonNull @ReportChannelParameters int reportChannelParameters) {
-        logEvent(eventName, category, itemName, false, reportChannelParameters);
-    }
-
-    /**
-     * Log common event.
-     *
-     * @param category event category
-     * @param itemName item id.
-     * @param isItem should use item id or not to send the event.
-     */
-    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem, @NonNull @ReportChannelParameters int reportChannelParameters) {
-        Timber.d("Log event: event name=%s, category=%s, %s=%s", eventName, category, isItem ? "itemId" : "itemName", itemName);
-        if (!enabled) return;
-
-        if ((reportChannelParameters & ReportChannelParameters.GP) == ReportChannelParameters.GP) {
-            try {
-                if (gaTracker != null) {
-                    HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
-                            .setCategory(eventName);
-                    if ((reportChannelParameters & ReportChannelParameters.GP_IGNORE_LABEL) != ReportChannelParameters.GP_IGNORE_LABEL) {
-                        builder.setLabel(itemName);
-                    }
-                    if (!TextUtils.isEmpty(category))
-                        builder.setAction(category);
-                    gaTracker.send(builder.build());
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        if ((reportChannelParameters & ReportChannelParameters.FIREBASE) == ReportChannelParameters.FIREBASE) {
-            try {
-                if (firebaseAnalytics != null) {
-                    Bundle bundle = new Bundle();
-                    if (!TextUtils.isEmpty(category))
-                        bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
-                    if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
-                        bundle.putString("screen", shortScreenName);
-                    }
-                    bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
-                    firebaseAnalytics.logEvent(eventName, bundle);
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        if ((reportChannelParameters & ReportChannelParameters.FACEBOOK) == ReportChannelParameters.FACEBOOK) {
-            try {
-                if (facebookEventsLogger != null) {
-                    Bundle parameters = new Bundle();
-                    if (!TextUtils.isEmpty(category))
-                        parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
-                    parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
-                    facebookEventsLogger.logEvent(eventName, parameters);
-                }
-            } catch (Exception ignored) {
-            }
-        }
+        logEvent(eventName, category, itemName, false);
     }
 
     /**
@@ -553,7 +514,7 @@ public class EventLogger {
         if (!enabled) return;
 
         try {
-            if (gaTracker != null) {
+            if (gaTracker != null && gaEventLoggable(eventName)) {
                 HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
                         .setCategory(eventName)
                         .setValue(value);
@@ -580,13 +541,62 @@ public class EventLogger {
         }
 
         try {
-            if (facebookEventsLogger != null) {
+            if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
                 Bundle parameters = new Bundle();
                 if (!TextUtils.isEmpty(category))
                     parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
                 if (!TextUtils.isEmpty(itemName))
                     parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
                 facebookEventsLogger.logEvent(eventName, value, parameters);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Log common event.
+     *
+     * @param category event category
+     * @param itemName item id.
+     * @param isItem   should use item id or not to send the event.
+     */
+    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
+        Timber.d("Log event: event name=%s, category=%s, %s=%s", eventName, category, isItem ? "itemId" : "itemName", itemName);
+        if (!enabled) return;
+
+        try {
+            if (gaTracker != null && gaEventLoggable(eventName)) {
+                HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
+                        .setCategory(eventName)
+                        .setLabel(itemName);
+                if (!TextUtils.isEmpty(category))
+                    builder.setAction(category);
+                gaTracker.send(builder.build());
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            if (firebaseAnalytics != null) {
+                Bundle bundle = new Bundle();
+                if (!TextUtils.isEmpty(category))
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
+                if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
+                    bundle.putString("screen", shortScreenName);
+                }
+                bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
+                firebaseAnalytics.logEvent(eventName, bundle);
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
+                Bundle parameters = new Bundle();
+                if (!TextUtils.isEmpty(category))
+                    parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
+                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
+                facebookEventsLogger.logEvent(eventName, parameters);
             }
         } catch (Exception ignored) {
         }
@@ -611,7 +621,8 @@ public class EventLogger {
 
     /**
      * Set user property.
-     * @param key property name.
+     *
+     * @param key   property name.
      * @param value property value.
      */
     public void setUserProperty(final @NonNull String key, final @Nullable String value) {
@@ -642,6 +653,7 @@ public class EventLogger {
 
     /**
      * Sets the user ID property.
+     *
      * @param userId user id. null to remove the user id from event logger.
      */
     public void setUserId(final String userId) {
