@@ -8,7 +8,6 @@ android {
         targetSdkVersion rootProject.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -19,14 +18,11 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-
-    compile "com.google.android.gms:play-services-analytics:$firebaseVersion"
-    compile "com.google.firebase:firebase-core:$firebaseVersion"
-    compile "com.google.firebase:firebase-crash:$firebaseVersion"
+    compileOnly "com.google.android.gms:play-services-analytics:$firebaseVersion"
+    compileOnly "com.google.firebase:firebase-core:$firebaseVersion"
+    implementation "com.google.firebase:firebase-crash:$firebaseVersion"
 
     // facebook analytics
-    compile("com.facebook.android:facebook-android-sdk:$facebookVersion")
-
-    compile "com.jakewharton.timber:timber:$timberVersion"
+    compileOnly("com.facebook.android:facebook-android-sdk:$facebookVersion")
+    compileOnly "com.jakewharton.timber:timber:$timberVersion"
 }
