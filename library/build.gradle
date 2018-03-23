@@ -1,5 +1,10 @@
 apply plugin: 'com.android.library'
 
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
