@@ -23,11 +23,13 @@ android {
 }
 
 dependencies {
-    compileOnly "com.google.android.gms:play-services-analytics:$firebaseVersion"
-    compileOnly "com.google.firebase:firebase-core:$firebaseVersion"
-    implementation "com.google.firebase:firebase-crash:$firebaseVersion"
+    implementation "com.google.firebase:firebase-core:$firebaseCoreVersion"
+    implementation "com.google.android.gms:play-services-analytics:$playAnalyticsVersion"
+    implementation("com.crashlytics.sdk.android:crashlytics:$crashlyticsVersion") {
+        transitive = true
+    }
 
     // facebook analytics
-    compileOnly("com.facebook.android:facebook-android-sdk:$facebookVersion")
-    compileOnly "com.jakewharton.timber:timber:$timberVersion"
+    implementation("com.facebook.android:facebook-android-sdk:$facebookVersion")
+    implementation "com.jakewharton.timber:timber:$timberVersion"
 }

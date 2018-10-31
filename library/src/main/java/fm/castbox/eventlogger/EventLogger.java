@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.crashlytics.android.Crashlytics;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsConstants;
@@ -16,7 +17,6 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crash.FirebaseCrash;
 
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -604,14 +604,7 @@ public class EventLogger {
      * @param message readable message additional to err.
      */
     public void logError(final Throwable err, @Nullable String message) {
-        if (!enableCrashReport) return;
-
-        try {
-            if (!TextUtils.isEmpty(message))
-                FirebaseCrash.log(message);
-            FirebaseCrash.report(err);
-        } catch (Exception ignored) {
-        }
+//        if (!enableCrashReport) return;
     }
 
     /**
