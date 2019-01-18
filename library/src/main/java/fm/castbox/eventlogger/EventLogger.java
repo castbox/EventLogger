@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.crashlytics.android.Crashlytics;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsConstants;
@@ -81,10 +80,14 @@ public class EventLogger {
     private long lastScreenLogTime = 0L;
     private long firstLaunchTime = 0L;
 
+    private EventLoggerCallback eventLoggerCallback;
+
     private EventLogger() {
     }
 
-    public EventLogger init(@NonNull Application application) {
+    public EventLogger init(@NonNull Application application, EventLoggerCallback callback) {
+        eventLoggerCallback = callback;
+
         sharedPreferences = application.getSharedPreferences("EventLogger", Context.MODE_PRIVATE);
 
         if (enabled) {
@@ -505,7 +508,8 @@ public class EventLogger {
      * @param itemName item id.
      */
     public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value) {
-        Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d.", eventName, category, itemName, value);
+        boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
+        Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d, extendSession=%s.", eventName, category, itemName, value, String.valueOf(extendSession));
         if (!enabled) return;
 
         try {
@@ -525,6 +529,9 @@ public class EventLogger {
         try {
             if (firebaseAnalytics != null) {
                 Bundle bundle = new Bundle();
+                if (extendSession) {
+                    bundle.putLong("extend_session", 1);
+                }
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
                 if (!TextUtils.isEmpty(itemName))
@@ -556,7 +563,8 @@ public class EventLogger {
      * @param isItem   should use item id or not to send the event.
      */
     private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
-        Timber.d("Log event: event name=%s, category=%s, %s=%s", eventName, category, isItem ? "itemId" : "itemName", itemName);
+        boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
+        Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
         if (!enabled) return;
 
         try {
@@ -574,6 +582,9 @@ public class EventLogger {
         try {
             if (firebaseAnalytics != null) {
                 Bundle bundle = new Bundle();
+                if (extendSession) {
+                    bundle.putLong("extend_session", 1);
+                }
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
                 if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
@@ -661,5 +672,9 @@ public class EventLogger {
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    public interface EventLoggerCallback {
+        boolean needExtendSession(String eventName, String category);
     }
 }
