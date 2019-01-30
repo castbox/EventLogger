@@ -64,7 +64,6 @@ public class EventLogger {
     private int googleAnalyticsResId = 0;
     private boolean enableFirebaseAnalytics = false;
     private boolean enableFacebookAnalytics = false;
-    private boolean enableCrashReport = false;
     // instances
     private Tracker gaTracker;  // Google Analytics Tracker
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
@@ -166,11 +165,6 @@ public class EventLogger {
         // facebook
         enableFacebookAnalytics = true;
         facebookEventNameFilters = filter;
-        return this;
-    }
-
-    public EventLogger enableCrashReport(boolean enabled) {
-        enableCrashReport = enabled;
         return this;
     }
 
@@ -606,16 +600,6 @@ public class EventLogger {
             }
         } catch (Exception ignored) {
         }
-    }
-
-    /**
-     * Report error.
-     *
-     * @param err     throwable to be report.
-     * @param message readable message additional to err.
-     */
-    public void logError(final Throwable err, @Nullable String message) {
-//        if (!enableCrashReport) return;
     }
 
     /**
