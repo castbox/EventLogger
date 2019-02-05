@@ -1,5 +1,6 @@
 package fm.castbox.eventlogger;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -308,7 +309,7 @@ public class EventLogger {
      *
      * @param screenName screen name, i.e. fragment class name.
      */
-    public synchronized void logScreen(String screenName) {
+    public synchronized void logScreen(@NonNull Activity activity,  @NonNull String screenName) {
         Timber.d("Log screen view, screen=%s.", screenName);
         // Last event hasn't called logScreenPause, do it first
         if (lastScreenLogTime != 0) {
@@ -329,6 +330,10 @@ public class EventLogger {
 
         try {
             if (firebaseAnalytics != null) {
+                // screen_view event
+                firebaseAnalytics.setCurrentScreen(activity, screenName, null);
+
+                // screen event
                 Bundle bundle = new Bundle();
                 String[] names = screenName.split("\\.");
                 shortScreenName = names[names.length - 1];
