@@ -22,6 +22,7 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import timber.log.Timber;
 
@@ -374,7 +375,6 @@ public class EventLogger {
      * @param duration   screen duration.
      */
     private void logScreenLife(final String screenName, final long duration) {
-//        Timber.d("Log screen life, screen=%s, duration=%ds.", screenName, duration/1000. );
         if (!enabled) return;
 
         if (duration <= 0) return;
@@ -452,61 +452,48 @@ public class EventLogger {
     }
 
     /**
-     * Log item view event
+     * Log common event.
      *
-     * @param itemId item id to be viewed.
-     */
-    public void logItemView(final @NonNull String itemId) {
-        logItemView(null, itemId);
-    }
-
-    /**
-     * Log item view event
-     *
+     * @param eventName event name
      * @param category event category
-     * @param itemId   item id to be viewed.
+     * @param itemName item id.
      */
-    public void logItemView(final @Nullable String category, final @NonNull String itemId) {
-        logItemAction(FirebaseAnalytics.Event.VIEW_ITEM, category, itemId);
-    }
-
-    /**
-     * Log event performed on specified item.
-     *
-     * @param itemId item id to be viewed.
-     */
-    public void logItemAction(final @NonNull String eventName, final @NonNull String itemId) {
-        logItemAction(eventName, null, itemId);
-    }
-
-    /**
-     * Log event performed on specified item.
-     *
-     * @param category event category
-     * @param itemName item id to be viewed.
-     */
-    public void logItemAction(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
-
-        logEvent(eventName, category, itemName, true);
+    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
+        logEvent(eventName, category, itemName, null, false);
     }
 
     /**
      * Log common event.
      *
+     * @param eventName event name
      * @param category event category
      * @param itemName item id.
      */
-    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
-        logEvent(eventName, category, itemName, false);
+    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra) {
+        logEvent(eventName, category, itemName, extra, false);
     }
 
     /**
      * Log common event with a value.
      *
+     * @param eventName event name
      * @param category event category
      * @param itemName item id.
      */
     public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value) {
+        logEventValue(eventName, category, itemName, value, null);
+    }
+
+    /**
+     * Log common event with a value.
+     *
+     * @param eventName event name
+     * @param category event category
+     * @param itemName item id.
+     * @param value value to be logged
+     * @param extra extra parameters
+     */
+    public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value, final Map<String, Object> extra) {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
         Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d, extendSession=%s.", eventName, category, itemName, value, String.valueOf(extendSession));
         if (!enabled) return;
@@ -527,7 +514,8 @@ public class EventLogger {
 
         try {
             if (firebaseAnalytics != null) {
-                Bundle bundle = new Bundle();
+                Bundle bundle = createBundle(extra);
+
                 if (extendSession) {
                     bundle.putLong("extend_session", 1);
                 }
@@ -543,7 +531,8 @@ public class EventLogger {
 
         try {
             if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
-                Bundle parameters = new Bundle();
+                Bundle parameters = createBundle(extra);
+
                 if (!TextUtils.isEmpty(category))
                     parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
                 if (!TextUtils.isEmpty(itemName))
@@ -559,9 +548,10 @@ public class EventLogger {
      *
      * @param category event category
      * @param itemName item id.
+     * @param extra extra parameters
      * @param isItem   should use item id or not to send the event.
      */
-    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, boolean isItem) {
+    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra, boolean isItem) {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
         Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
         if (!enabled) return;
@@ -580,7 +570,8 @@ public class EventLogger {
 
         try {
             if (firebaseAnalytics != null) {
-                Bundle bundle = new Bundle();
+                Bundle bundle = createBundle(extra);
+
                 if (extendSession) {
                     bundle.putLong("extend_session", 1);
                 }
@@ -597,7 +588,8 @@ public class EventLogger {
 
         try {
             if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
-                Bundle parameters = new Bundle();
+                Bundle parameters = createBundle(extra);
+
                 if (!TextUtils.isEmpty(category))
                     parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
                 parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
@@ -605,6 +597,28 @@ public class EventLogger {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    private Bundle createBundle(final Map<String, Object> extra) {
+        Bundle parameters = new Bundle();
+        if (extra != null) {
+            for (String k: extra.keySet()) {
+                Object v = extra.get(k);
+                if (v instanceof String)
+                    parameters.putString(k, (String)v);
+                else if (v instanceof Long)
+                    parameters.putLong(k, (Long)v);
+                else if (v instanceof Integer)
+                    parameters.putInt(k, (Integer)v);
+                else if (v instanceof Float)
+                    parameters.putFloat(k, (Float)v);
+                else if (v instanceof Double)
+                    parameters.putDouble(k, (Double)v);
+                else
+                    Timber.d("FacebookAnalytics: Ignore event property %s", k);
+            }
+        }
+        return parameters;
     }
 
     /**
