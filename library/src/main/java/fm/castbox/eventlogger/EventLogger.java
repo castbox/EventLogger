@@ -432,6 +432,16 @@ public class EventLogger {
     }
 
     /**
+     * Log user action.
+     *
+     * @param category event category
+     * @param itemName name of action
+     */
+    public void logAction(final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra) {
+        logEvent(EVENT_NAME_USER_ACTION, category, itemName, extra);
+    }
+
+    /**
      * @param category
      * @param itemName
      */
