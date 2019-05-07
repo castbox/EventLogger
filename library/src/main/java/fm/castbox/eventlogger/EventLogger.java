@@ -590,7 +590,8 @@ public class EventLogger {
                 if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
                     bundle.putString("screen", shortScreenName);
                 }
-                bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
+                if (!TextUtils.isEmpty(itemName))
+                    bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
             }
         } catch (Exception ignored) {
