@@ -13,16 +13,12 @@ import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsConstants;
 import com.facebook.appevents.AppEventsLogger;
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import timber.log.Timber;
 
@@ -62,17 +58,13 @@ public class EventLogger {
     // sharePreferences
     private SharedPreferences sharedPreferences;
 
-    private String googleAnalyticsStringId;
-    private int googleAnalyticsResId = 0;
     private boolean enableFirebaseAnalytics = false;
     private boolean enableFacebookAnalytics = false;
     // instances
-    private Tracker gaTracker;  // Google Analytics Tracker
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
     private AppEventsLogger facebookEventsLogger; // Facebook event logger
 
     // event name filter
-    private Set<String> gaEventNameFilters;
     private Set<String> facebookEventNameFilters;
 
     // screen time
@@ -92,20 +84,6 @@ public class EventLogger {
         sharedPreferences = application.getSharedPreferences("EventLogger", Context.MODE_PRIVATE);
 
         if (enabled) {
-            // ga
-            if (googleAnalyticsStringId != null || googleAnalyticsResId > 0) {
-                GoogleAnalytics analytics = GoogleAnalytics.getInstance(application);
-                // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
-                if (googleAnalyticsResId > 0)
-                    gaTracker = analytics.newTracker(googleAnalyticsResId);
-                else
-                    gaTracker = analytics.newTracker(googleAnalyticsStringId);
-                gaTracker.enableExceptionReporting(false);
-                gaTracker.enableAutoActivityTracking(false);
-                gaTracker.enableAdvertisingIdCollection(true);
-                gaTracker.setAnonymizeIp(true);
-                //gaTracker.setSampleRate(10.0d);
-            }
             // firebase
             if (enableFirebaseAnalytics) {
                 firebaseAnalytics = FirebaseAnalytics.getInstance(application);
@@ -131,28 +109,6 @@ public class EventLogger {
         return this;
     }
 
-    public EventLogger enableGoogleAnalytics(String id) {
-        return enableGoogleAnalytics(id, null);
-    }
-
-    public EventLogger enableGoogleAnalytics(String id, Set<String> filter) {
-        // Google analytics
-        googleAnalyticsStringId = id;
-        gaEventNameFilters = filter;
-        return this;
-    }
-
-    public EventLogger enableGoogleAnalytics(int id) {
-        return enableGoogleAnalytics(id, null);
-    }
-
-    public EventLogger enableGoogleAnalytics(int id, Set<String> filter) {
-        // Google analytics
-        googleAnalyticsResId = id;
-        gaEventNameFilters = filter;
-        return this;
-    }
-
     public EventLogger enableFirebaseAnalytics() {
         // firebase analytics
         enableFirebaseAnalytics = true;
@@ -170,20 +126,12 @@ public class EventLogger {
         return this;
     }
 
-    public Tracker getGaTracker() {
-        return gaTracker;
-    }
-
     public FirebaseAnalytics getFirebaseAnalytics() {
         return firebaseAnalytics;
     }
 
     public AppEventsLogger getFacebookEventsLogger() {
         return facebookEventsLogger;
-    }
-
-    private boolean gaEventLoggable(@NonNull String eventName) {
-        return eventLoggable(eventName, gaEventNameFilters);
     }
 
     private boolean facebookEventLoggable(@NonNull String eventName) {
@@ -320,14 +268,6 @@ public class EventLogger {
         lastScreenLogTime = System.currentTimeMillis();
 
         if (!enabled) return;
-
-        try {
-            if (gaTracker != null && gaEventLoggable(EVENT_NAME_SCREEN)) {
-                gaTracker.setScreenName(screenName);
-                gaTracker.send(new HitBuilders.ScreenViewBuilder().build());
-            }
-        } catch (Exception ignored) {
-        }
 
         try {
             if (firebaseAnalytics != null) {
@@ -509,20 +449,6 @@ public class EventLogger {
         if (!enabled) return;
 
         try {
-            if (gaTracker != null && gaEventLoggable(eventName)) {
-                HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
-                        .setCategory(eventName)
-                        .setValue(value);
-                if (!TextUtils.isEmpty(category))
-                    builder.setAction(category);
-                if (!TextUtils.isEmpty(itemName))
-                    builder.setLabel(itemName);
-                gaTracker.send(builder.build());
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
             if (firebaseAnalytics != null) {
                 Bundle bundle = createBundle(extra);
 
@@ -565,18 +491,6 @@ public class EventLogger {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
         Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
         if (!enabled) return;
-
-        try {
-            if (gaTracker != null && gaEventLoggable(eventName)) {
-                HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
-                        .setCategory(eventName)
-                        .setLabel(itemName);
-                if (!TextUtils.isEmpty(category))
-                    builder.setAction(category);
-                gaTracker.send(builder.build());
-            }
-        } catch (Exception ignored) {
-        }
 
         try {
             if (firebaseAnalytics != null) {
