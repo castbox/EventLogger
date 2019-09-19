@@ -346,7 +346,7 @@ public class EventLogger {
      *
      * @param itemName name of action
      */
-    public void logAction(final @NonNull String itemName) {
+    public void logAction(final @Nullable String itemName) {
         logAction(null, itemName);
     }
 
@@ -356,7 +356,7 @@ public class EventLogger {
      * @param category event category
      * @param itemName name of action
      */
-    public void logAction(final @Nullable String category, final @NonNull String itemName) {
+    public void logAction(final @Nullable String category, final @Nullable String itemName) {
         logEvent(EVENT_NAME_USER_ACTION, category, itemName);
     }
 
@@ -367,7 +367,7 @@ public class EventLogger {
      * @param itemName event itemName
      * @param value    event value
      */
-    public void logAction(final @Nullable String category, final @NonNull String itemName, final long value) {
+    public void logAction(final @Nullable String category, final @Nullable String itemName, final long value) {
         logEventValue(EVENT_NAME_USER_ACTION, category, itemName, value);
     }
 
@@ -377,7 +377,7 @@ public class EventLogger {
      * @param category event category
      * @param itemName name of action
      */
-    public void logAction(final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra) {
+    public void logAction(final @Nullable String category, final @Nullable String itemName, final Map<String, Object> extra) {
         logEvent(EVENT_NAME_USER_ACTION, category, itemName, extra);
     }
 
@@ -408,7 +408,7 @@ public class EventLogger {
      * @param category event category
      * @param itemName item id.
      */
-    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName) {
+    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName) {
         logEvent(eventName, category, itemName, null, false);
     }
 
@@ -419,7 +419,7 @@ public class EventLogger {
      * @param category event category
      * @param itemName item id.
      */
-    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra) {
+    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final Map<String, Object> extra) {
         logEvent(eventName, category, itemName, extra, false);
     }
 
@@ -487,7 +487,7 @@ public class EventLogger {
      * @param extra extra parameters
      * @param isItem   should use item id or not to send the event.
      */
-    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra, boolean isItem) {
+    private void logEvent(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final Map<String, Object> extra, boolean isItem) {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
         Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
         if (!enabled) return;
