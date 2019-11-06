@@ -5,14 +5,11 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.appevents.AppEventsConstants;
-import com.facebook.appevents.AppEventsLogger;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.net.URLDecoder;
@@ -59,13 +56,8 @@ public class EventLogger {
     private SharedPreferences sharedPreferences;
 
     private boolean enableFirebaseAnalytics = false;
-    private boolean enableFacebookAnalytics = false;
     // instances
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
-    private AppEventsLogger facebookEventsLogger; // Facebook event logger
-
-    // event name filter
-    private Set<String> facebookEventNameFilters;
 
     // screen time
     private String screenName;
@@ -89,14 +81,6 @@ public class EventLogger {
                 firebaseAnalytics = FirebaseAnalytics.getInstance(application);
                 firebaseAnalytics.setAnalyticsCollectionEnabled(true);
             }
-            // fan
-            if (enableFacebookAnalytics) {
-                // disabled since v4.19.0
-                //if (!FacebookSdk.isInitialized())
-                //    FacebookSdk.sdkInitialize(application);
-                AppEventsLogger.activateApp(application);
-                facebookEventsLogger = AppEventsLogger.newLogger(application);
-            }
         }
         // to set the install time in case of not exist.
         getInstallTime();
@@ -115,27 +99,8 @@ public class EventLogger {
         return this;
     }
 
-    public EventLogger enableFacebookAnalytics() {
-        return enableFacebookAnalytics(null);
-    }
-
-    public EventLogger enableFacebookAnalytics(Set<String> filter) {
-        // facebook
-        enableFacebookAnalytics = true;
-        facebookEventNameFilters = filter;
-        return this;
-    }
-
     public FirebaseAnalytics getFirebaseAnalytics() {
         return firebaseAnalytics;
-    }
-
-    public AppEventsLogger getFacebookEventsLogger() {
-        return facebookEventsLogger;
-    }
-
-    private boolean facebookEventLoggable(@NonNull String eventName) {
-        return eventLoggable(eventName, facebookEventNameFilters);
     }
 
     private boolean eventLoggable(@NonNull String eventName, Set<String> filter) {
@@ -286,16 +251,6 @@ public class EventLogger {
             }
         } catch (Exception ignored) {
         }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
-                Bundle parameters = new Bundle();
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN);
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
-                facebookEventsLogger.logEvent(EVENT_NAME_SCREEN, parameters);
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     public synchronized void logScreenPause(final String screenName) {
@@ -326,16 +281,6 @@ public class EventLogger {
                 bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, EVENT_CATEGORY_SCREEN_LIFE);
                 bundle.putLong(FirebaseAnalytics.Param.VALUE, duration);
                 firebaseAnalytics.logEvent(EVENT_NAME_SCREEN, bundle);
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
-                Bundle parameters = new Bundle();
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN_LIFE);
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
-                facebookEventsLogger.logEvent(EVENT_NAME_SCREEN, duration, parameters);
             }
         } catch (Exception ignored) {
         }
@@ -464,19 +409,6 @@ public class EventLogger {
             }
         } catch (Exception ignored) {
         }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
-                Bundle parameters = createBundle(extra);
-
-                if (!TextUtils.isEmpty(category))
-                    parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
-                if (!TextUtils.isEmpty(itemName))
-                    parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
-                facebookEventsLogger.logEvent(eventName, value, parameters);
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     /**
@@ -507,18 +439,6 @@ public class EventLogger {
                 if (!TextUtils.isEmpty(itemName))
                     bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(eventName)) {
-                Bundle parameters = createBundle(extra);
-
-                if (!TextUtils.isEmpty(category))
-                    parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
-                facebookEventsLogger.logEvent(eventName, parameters);
             }
         } catch (Exception ignored) {
         }
@@ -562,20 +482,6 @@ public class EventLogger {
             }
         } catch (Throwable ignored) {
         }
-
-        try {
-            if (facebookEventsLogger != null) {
-                Bundle parameters = new Bundle();
-                parameters.putString(key, value);
-                AppEventsLogger.updateUserProperties(parameters, new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        Timber.d("User properties updated: %s=%s", key, value);
-                    }
-                });
-            }
-        } catch (Throwable ignored) {
-        }
     }
 
     /**
@@ -590,13 +496,6 @@ public class EventLogger {
         try {
             if (firebaseAnalytics != null) {
                 firebaseAnalytics.setUserId(userId);
-            }
-        } catch (Throwable ignored) {
-        }
-
-        try {
-            if (facebookEventsLogger != null) {
-                AppEventsLogger.setUserID(userId);
             }
         } catch (Throwable ignored) {
         }
