@@ -26,6 +26,7 @@ project.ext {
     minSdkVersion = 16
     targetSdkVersion = 25
     firebaseVersion = '11.8.0'
+    installreferrerVersion = '1.1'
 }
 
 task clean(type: Delete) {
