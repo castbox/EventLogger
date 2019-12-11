@@ -23,8 +23,8 @@ android {
 }
 
 dependencies {
-    implementation "com.google.firebase:firebase-core:$firebaseCoreVersion"
-    implementation "com.android.installreferrer:installreferrer:1.0"
+    implementation "com.google.firebase:firebase-analytics:$firebaseAnalyticsVersion"
+    implementation "com.android.installreferrer:installreferrer:1.1"
 
     // facebook analytics
     implementation("com.facebook.android:facebook-android-sdk:$facebookVersion")
