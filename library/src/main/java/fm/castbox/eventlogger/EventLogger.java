@@ -47,6 +47,9 @@ public class EventLogger {
     private static final String PLAY_STORE_ATTRIBUTION_KEY = "attribution";
 
     private static final String KEY_FIRST_LAUNCH_DATE = "firstLaunchDate";
+    private static final String KEY_RETENTION_D2 = "rd2";
+    private static final String KEY_RETENTION_W2 = "rw2";
+    private static final String KEY_RETENTION_M2 = "rm2";
 
     public final static String EVENT_NAME_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN = "screen";
@@ -265,6 +268,28 @@ public class EventLogger {
         lastScreenLogTime = System.currentTimeMillis();
 
         if (!enabled) return;
+
+        // log retention event
+        try {
+            long installTime = getInstallTime();
+            if (installTime > 60 * 60 * 24 && installTime <= 60 * 60 * 24 * 2) {
+                if (!sharedPreferences.getBoolean(KEY_RETENTION_D2, false)) {
+                    logEvent("retention_d2", null, null);
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_D2, true).apply();
+                }
+            } else if (installTime > 60 * 60 * 24 * 7 && installTime <= 60 * 60 * 24 * 14) {
+                if (!sharedPreferences.getBoolean(KEY_RETENTION_W2, false)) {
+                    logEvent("retention_w2", null, null);
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_W2, true).apply();
+                }
+            } else if (installTime > 60 * 60 * 24 * 30 && installTime <= 60 * 60 * 24 * 60) {
+                if (!sharedPreferences.getBoolean(KEY_RETENTION_M2, false)) {
+                    logEvent("retention_m2", null, null);
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_M2, true).apply();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
 
         try {
             if (firebaseAnalytics != null) {
