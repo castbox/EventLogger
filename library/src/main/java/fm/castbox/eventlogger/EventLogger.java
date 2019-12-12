@@ -5,9 +5,10 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
@@ -258,12 +259,8 @@ public class EventLogger {
      *
      * @param screenName screen name, i.e. fragment class name.
      */
-    public synchronized void logScreen(@NonNull Activity activity,  @NonNull String screenName) {
+    public void logScreen(@NonNull Activity activity,  @NonNull String screenName) {
         Timber.d("Log screen view, screen=%s.", screenName);
-        // Last event hasn't called logScreenPause, do it first
-        if (lastScreenLogTime != 0) {
-            logScreenPause(this.screenName);
-        }
         this.screenName = screenName;
         lastScreenLogTime = System.currentTimeMillis();
 
@@ -298,10 +295,10 @@ public class EventLogger {
         }
     }
 
-    public synchronized void logScreenPause(final String screenName) {
+    public void logScreenPause(final String screenName) {
         if (TextUtils.equals(this.screenName, screenName)) {
             long duration = System.currentTimeMillis() - lastScreenLogTime;
-            if (duration > 0 && duration <= 30 * 60 * 1000) // 0 < duration <= 30 minutes
+            if (duration > 0 && duration <= 120 * 60 * 1000) // 0 < duration <= 120 minutes
                 logScreenLife(screenName, duration);
             this.screenName = null;
             this.lastScreenLogTime = 0L;
