@@ -5,9 +5,10 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
@@ -480,6 +481,17 @@ public class EventLogger {
      */
     public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra) {
         logEvent(eventName, category, itemName, extra, false);
+    }
+
+    /**
+     * Log common event.
+     *
+     * @param eventName event name
+     * @param category event category
+     * @param itemName item id.
+     */
+    public void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final boolean isItem) {
+        logEvent(eventName, category, itemName, null, isItem);
     }
 
     /**
