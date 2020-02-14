@@ -77,6 +77,10 @@ public class EventLogger {
     private long lastScreenLogTime = 0L;
     private long firstLaunchTime = 0L;
 
+    private Boolean retentionD2 = null;
+    private Boolean retentionW2 = null;
+    private Boolean retentionM2 = null;
+
     private EventLoggerCallback eventLoggerCallback;
 
     private EventLogger() {
@@ -257,6 +261,54 @@ public class EventLogger {
         return Math.abs((long) ((now - firstLaunchTime) / 1000.));
     }
 
+    private boolean checkRetention(String key) {
+        if (TextUtils.equals(key, KEY_RETENTION_D2)) {
+            if (retentionD2 == null) {
+                retentionD2 = sharedPreferences.getBoolean(KEY_RETENTION_D2, false);
+            }
+            return retentionD2;
+        } else if (TextUtils.equals(key, KEY_RETENTION_W2)) {
+            if (retentionW2 == null) {
+                retentionW2 = sharedPreferences.getBoolean(KEY_RETENTION_D2, false);
+            }
+            return retentionW2;
+        } else if (TextUtils.equals(key, KEY_RETENTION_M2)) {
+            if (retentionM2 == null) {
+                retentionM2 = sharedPreferences.getBoolean(KEY_RETENTION_M2, false);
+            }
+            return retentionM2;
+        }
+
+        return false;
+    }
+
+    private void logRetentionEvent() {
+        // log retention event
+        try {
+            long installTime = getInstallTime();
+            if (installTime > 60 * 60 * 24 && installTime <= 60 * 60 * 24 * 2) {
+                if (!checkRetention(KEY_RETENTION_D2)) {
+                    logEvent("retention_d2", null, null);
+                    retentionD2 = true;
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_D2, true).apply();
+                }
+            } else if (installTime > 60 * 60 * 24 * 7 && installTime <= 60 * 60 * 24 * 14) {
+                if (!checkRetention(KEY_RETENTION_W2)) {
+                    logEvent("retention_w2", null, null);
+                    retentionW2 = true;
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_W2, true).apply();
+                }
+            } else if (installTime > 60 * 60 * 24 * 30 && installTime <= 60 * 60 * 24 * 60) {
+                if (!checkRetention(KEY_RETENTION_M2)) {
+                    logEvent("retention_m2", null, null);
+                    retentionM2 = true;
+                    sharedPreferences.edit().putBoolean(KEY_RETENTION_M2, true).apply();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /**
      * Enter a screen, mostly we use it to log entering fragment.
      *
@@ -269,27 +321,7 @@ public class EventLogger {
 
         if (!enabled) return;
 
-        // log retention event
-        try {
-            long installTime = getInstallTime();
-            if (installTime > 60 * 60 * 24 && installTime <= 60 * 60 * 24 * 2) {
-                if (!sharedPreferences.getBoolean(KEY_RETENTION_D2, false)) {
-                    logEvent("retention_d2", null, null);
-                    sharedPreferences.edit().putBoolean(KEY_RETENTION_D2, true).apply();
-                }
-            } else if (installTime > 60 * 60 * 24 * 7 && installTime <= 60 * 60 * 24 * 14) {
-                if (!sharedPreferences.getBoolean(KEY_RETENTION_W2, false)) {
-                    logEvent("retention_w2", null, null);
-                    sharedPreferences.edit().putBoolean(KEY_RETENTION_W2, true).apply();
-                }
-            } else if (installTime > 60 * 60 * 24 * 30 && installTime <= 60 * 60 * 24 * 60) {
-                if (!sharedPreferences.getBoolean(KEY_RETENTION_M2, false)) {
-                    logEvent("retention_m2", null, null);
-                    sharedPreferences.edit().putBoolean(KEY_RETENTION_M2, true).apply();
-                }
-            }
-        } catch (Throwable ignored) {
-        }
+        logRetentionEvent();
 
         try {
             if (firebaseAnalytics != null) {
