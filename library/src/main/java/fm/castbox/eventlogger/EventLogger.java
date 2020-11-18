@@ -504,7 +504,11 @@ public class EventLogger {
      */
     public void logEventValue(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final long value, final Map<String, Object> extra) {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
-        Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d, extendSession=%s.", eventName, category, itemName, value, String.valueOf(extendSession));
+        String extraString = "";
+        if(extra != null){
+            extraString = extra.toString();
+        }
+        Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d, extendSession=%s, extra=%s.", eventName, category, itemName, value, String.valueOf(extendSession), extraString);
         if (!enabled) return;
 
         try {
@@ -562,7 +566,11 @@ public class EventLogger {
      */
     private void logEvent(final @NonNull String eventName, final @Nullable String category, final @NonNull String itemName, final Map<String, Object> extra, boolean isItem) {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
-        Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
+        String extraString = "";
+        if(extra != null){
+            extraString = extra.toString();
+        }
+        Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s, extra=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession), extraString);
         if (!enabled) return;
 
         try {
