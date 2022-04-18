@@ -51,8 +51,6 @@ public class EventLogger {
     private static final String KEY_RETENTION_W2 = "rw2";
     private static final String KEY_RETENTION_M2 = "rm2";
 
-    public final static String EVENT_NAME_SCREEN = "screen";
-    private final static String EVENT_CATEGORY_SCREEN = "screen";
     private final static String EVENT_CATEGORY_SCREEN_LIFE = "screen_life";
 
     public final static String EVENT_NAME_USER_ACTION = "user_action";
@@ -322,34 +320,6 @@ public class EventLogger {
         if (!enabled) return;
 
         logRetentionEvent();
-
-        try {
-            if (firebaseAnalytics != null) {
-                // screen_view event
-                firebaseAnalytics.setCurrentScreen(activity, screenName, null);
-
-                // screen event
-                Bundle bundle = new Bundle();
-                String[] names = screenName.split("\\.");
-                shortScreenName = names[names.length - 1];
-                if (shortScreenName.length() > 36)
-                    shortScreenName = shortScreenName.substring(0, 36);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, shortScreenName);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, EVENT_CATEGORY_SCREEN);
-                firebaseAnalytics.logEvent(EVENT_NAME_SCREEN, bundle);
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
-                Bundle parameters = new Bundle();
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN);
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
-                facebookEventsLogger.logEvent(EVENT_NAME_SCREEN, parameters);
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     public void logScreenPause(final String screenName) {
@@ -372,27 +342,6 @@ public class EventLogger {
         if (!enabled) return;
 
         if (duration <= 0) return;
-        try {
-            if (firebaseAnalytics != null) {
-                Bundle bundle = new Bundle();
-                String[] names = screenName.split("\\.");
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, names[names.length - 1]);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, EVENT_CATEGORY_SCREEN_LIFE);
-                bundle.putLong(FirebaseAnalytics.Param.VALUE, duration);
-                firebaseAnalytics.logEvent(EVENT_NAME_SCREEN, bundle);
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (facebookEventsLogger != null && facebookEventLoggable(EVENT_NAME_SCREEN)) {
-                Bundle parameters = new Bundle();
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, EVENT_CATEGORY_SCREEN_LIFE);
-                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, screenName);
-                facebookEventsLogger.logEvent(EVENT_NAME_SCREEN, duration, parameters);
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     /**
@@ -555,9 +504,6 @@ public class EventLogger {
                 }
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
-                if (TextUtils.equals(eventName, EVENT_NAME_USER_ACTION) && !TextUtils.isEmpty(shortScreenName)) {
-                    bundle.putString("screen", shortScreenName);
-                }
                 if (!TextUtils.isEmpty(itemName))
                     bundle.putString(isItem ? FirebaseAnalytics.Param.ITEM_ID : FirebaseAnalytics.Param.ITEM_NAME, itemName);
                 firebaseAnalytics.logEvent(eventName, bundle);
