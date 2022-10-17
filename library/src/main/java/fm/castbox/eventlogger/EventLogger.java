@@ -563,19 +563,19 @@ public class EventLogger {
         } catch (Throwable ignored) {
         }
 
-        try {
-            if (facebookEventsLogger != null) {
-                Bundle parameters = new Bundle();
-                parameters.putString(key, value);
-                AppEventsLogger.updateUserProperties(parameters, new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        Timber.d("User properties updated: %s=%s", key, value);
-                    }
-                });
-            }
-        } catch (Throwable ignored) {
-        }
+//        try {
+//            if (facebookEventsLogger != null) {
+//                Bundle parameters = new Bundle();
+//                parameters.putString(key, value);
+//                AppEventsLogger.updateUserProperties(parameters, new GraphRequest.Callback() {
+//                    @Override
+//                    public void onCompleted(GraphResponse response) {
+//                        Timber.d("User properties updated: %s=%s", key, value);
+//                    }
+//                });
+//            }
+//        } catch (Throwable ignored) {
+//        }
     }
 
     /**
