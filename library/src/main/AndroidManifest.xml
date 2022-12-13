@@ -7,7 +7,7 @@
     <application>
 
         <receiver android:name="fm.castbox.eventlogger.CampaignTrackingReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_FIRST_LAUNCH" />
 <!--                <action android:name="com.android.vending.INSTALL_REFERRER" />-->
