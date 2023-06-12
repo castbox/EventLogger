@@ -16,7 +16,9 @@ import com.facebook.appevents.AppEventsConstants;
 import com.facebook.appevents.AppEventsLogger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -522,6 +524,14 @@ public class EventLogger {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    public void logFacebookPurchase(double amount, String currencyCode, String contentJson) {
+        Bundle params = new Bundle();
+        params.putString(AppEventsConstants.EVENT_PARAM_CONTENT, contentJson);
+        BigDecimal purchaseAmount = new BigDecimal(amount);
+        Currency currency = Currency.getInstance(currencyCode);
+        facebookEventsLogger.logPurchase(purchaseAmount, currency, params);
     }
 
     private Bundle createBundle(final Map<String, Object> extra) {
