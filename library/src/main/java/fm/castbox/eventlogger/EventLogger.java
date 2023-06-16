@@ -527,6 +527,7 @@ public class EventLogger {
     }
 
     public void logFacebookPurchase(double amount, String currencyCode, String contentJson) {
+        if (!enabled) return;
         Bundle params = new Bundle();
         params.putString(AppEventsConstants.EVENT_PARAM_CONTENT, contentJson);
         BigDecimal purchaseAmount = new BigDecimal(amount);
