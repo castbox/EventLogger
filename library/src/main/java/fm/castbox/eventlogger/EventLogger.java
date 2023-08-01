@@ -526,13 +526,12 @@ public class EventLogger {
         }
     }
 
-    public void logFacebookPurchase(double amount, String currencyCode, String contentJson) {
+    public void logFacebookPurchase(double amount, String currencyCode, HashMap<String, Object> params) {
         if (!enabled) return;
-        Bundle params = new Bundle();
-        params.putString(AppEventsConstants.EVENT_PARAM_CONTENT, contentJson);
         BigDecimal purchaseAmount = new BigDecimal(amount);
         Currency currency = Currency.getInstance(currencyCode);
-        facebookEventsLogger.logPurchase(purchaseAmount, currency, params);
+        Bundle bundle = createBundle(params);
+        facebookEventsLogger.logPurchase(purchaseAmount, currency, bundle);
     }
 
     private Bundle createBundle(final Map<String, Object> extra) {
