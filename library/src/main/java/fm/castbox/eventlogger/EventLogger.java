@@ -449,7 +449,7 @@ public class EventLogger {
                 if (!TextUtils.isEmpty(category))
                     bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
                 bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, itemName);
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ECOMMERCE_PURCHASE, bundle);
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.PURCHASE, bundle);
             }
         } catch (Exception ignored) {
         }
