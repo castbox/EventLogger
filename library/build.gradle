@@ -28,4 +28,5 @@ dependencies {
 
     // facebook analytics
     implementation "com.jakewharton.timber:timber:$timberVersion"
+    implementation("com.facebook.android:facebook-android-sdk:$facebookVersion")
 }

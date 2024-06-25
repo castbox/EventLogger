@@ -10,10 +10,15 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.facebook.appevents.AppEventsConstants;
+import com.facebook.appevents.AppEventsLogger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.util.Currency;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,8 +61,15 @@ public class EventLogger {
     private SharedPreferences sharedPreferences;
 
     private boolean enableFirebaseAnalytics = false;
+
+    private boolean enableFacebookAnalytics = false;
+
     // instances
     private FirebaseAnalytics firebaseAnalytics; // Google firebase event logger
+
+    private AppEventsLogger facebookEventsLogger; //
+
+    private Set<String> facebookEventNameFilters;
 
     // screen time
     private String screenName;
@@ -80,6 +92,10 @@ public class EventLogger {
             if (enableFirebaseAnalytics) {
                 firebaseAnalytics = FirebaseAnalytics.getInstance(application);
                 firebaseAnalytics.setAnalyticsCollectionEnabled(true);
+            }
+            if (enableFacebookAnalytics) {
+                AppEventsLogger.activateApp(application);
+                facebookEventsLogger = AppEventsLogger.newLogger(application);
             }
         }
         // to set the install time in case of not exist.
@@ -105,6 +121,50 @@ public class EventLogger {
 
     private boolean eventLoggable(@NonNull String eventName, Set<String> filter) {
         return filter == null || filter.contains(eventName);
+    }
+
+    public EventLogger enableFacebookAnalytics() {
+        Set<String> set = new HashSet<>();
+        set.add("tch_ad_rev_roas_001");
+        return enableFacebookAnalytics(set);
+    }
+
+    public EventLogger enableFacebookAnalytics(Set<String> filter) {
+        // facebook
+        enableFacebookAnalytics = true;
+        facebookEventNameFilters = filter;
+        return this;
+    }
+
+    public AppEventsLogger getFacebookEventsLogger() {
+        return facebookEventsLogger;
+    }
+
+    private boolean facebookEventLoggable(@NonNull String eventName) {
+        return eventLoggable(eventName, facebookEventNameFilters);
+    }
+
+    public void logEventFacebook(final @NonNull String eventName, final @Nullable String category, final @Nullable String itemName, final Map<String, Object> extra) {
+        Timber.d("Log event facebook: event name=%s, category=%s, itemName=%s, extra=%s, facebookEventsLogger:" + facebookEventsLogger, eventName, category, itemName, extra == null ? "" : extra.toString());
+        if (!enabled || facebookEventsLogger == null) return;
+        try {
+            Bundle parameters = createBundle(extra);
+
+            if (!TextUtils.isEmpty(category))
+                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, category);
+            if (!TextUtils.isEmpty(itemName))
+                parameters.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, itemName);
+            facebookEventsLogger.logEvent(eventName, parameters);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public void logFacebookPurchase(double amount, String currencyCode, HashMap<String, Object> params) {
+        if (!enabled || facebookEventsLogger == null) return;
+        BigDecimal purchaseAmount = new BigDecimal(amount);
+        Currency currency = Currency.getInstance(currencyCode);
+        Bundle bundle = createBundle(params);
+        facebookEventsLogger.logPurchase(purchaseAmount, currency, bundle);
     }
 
     public void setCampaignParams(@NonNull String url) {
@@ -496,6 +556,12 @@ public class EventLogger {
         try {
             if (firebaseAnalytics != null) {
                 firebaseAnalytics.setUserId(userId);
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (facebookEventsLogger != null) {
+                AppEventsLogger.setUserID(userId);
             }
         } catch (Throwable ignored) {
         }
