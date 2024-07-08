@@ -154,31 +154,31 @@ public class EventLogger {
         try {
             if (getInstallTime() < 24 * 3600L) {  // allow to set utm in 1 day since installation.
                 Map<String, String> queries = getQueryParameters(url);
-                setUtmProperties(queries);
+//                setUtmProperties(queries);
                 logUtm(queries);
             }
         } catch (Exception ignored) {
         }
     }
 
-    public void setUtmProperties(@NonNull Map<String, String> queries) {
-        if (!enabled)
-            return;
-        try {
-            final String utmSource = queries.get(KEY_CAMPAIGN_UTM_SOURCE);
-            if (isValidUtm(utmSource))
-                setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
-
-            final String utmMedium = queries.get(KEY_CAMPAIGN_UTM_MEDIUM);
-            if (isValidUtm(utmMedium))
-                setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
-
-            final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
-            if (isValidUtm(utmCampaign))
-                setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
-        } catch (Exception ignored) {
-        }
-    }
+//    public void setUtmProperties(@NonNull Map<String, String> queries) {
+//        if (!enabled)
+//            return;
+//        try {
+//            final String utmSource = queries.get(KEY_CAMPAIGN_UTM_SOURCE);
+//            if (isValidUtm(utmSource))
+//                setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, utmSource);
+//
+//            final String utmMedium = queries.get(KEY_CAMPAIGN_UTM_MEDIUM);
+//            if (isValidUtm(utmMedium))
+//                setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, utmMedium);
+//
+//            final String utmCampaign = queries.get(KEY_CAMPAIGN_UTM_CAMPAIGN);
+//            if (isValidUtm(utmCampaign))
+//                setUserProperty(KEY_CAMPAIGN_UTM_CAMPAIGN, utmCampaign);
+//        } catch (Exception ignored) {
+//        }
+//    }
 
     private void logUtm(@NonNull Map<String, String> queries) {
         if (!enabled) {
@@ -197,8 +197,8 @@ public class EventLogger {
             if (TextUtils.isEmpty(utmSource) && TextUtils.isEmpty(utmMedium) && TextUtils.isEmpty(utmCampaign)) {
                 if (!TextUtils.isEmpty(campaignId)) {
                     logEvent(PLAY_STORE, PLAY_STORE_ATTRIBUTION_KEY, "google.cpc");
-                    setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, "google");
-                    setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, "cpc");
+//                    setUserProperty(KEY_CAMPAIGN_UTM_SOURCE, "google");
+//                    setUserProperty(KEY_CAMPAIGN_UTM_MEDIUM, "cpc");
                 }
                 if (!TextUtils.isEmpty(keyword)) {
                     logEvent(PLAY_STORE, "keyword", keyword);
