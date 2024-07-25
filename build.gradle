@@ -21,10 +21,10 @@ allprojects {
 }
 
 project.ext {
-    compileSdkVersion = 26
-    buildToolsVersion = '26.0.2'
-    minSdkVersion = 16
-    targetSdkVersion = 25
+    compileSdkVersion = 34
+    buildToolsVersion = '34.0.0'
+    minSdkVersion = 23
+    targetSdkVersion = 34
     firebaseVersion = '11.8.0'
 }
 
