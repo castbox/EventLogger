@@ -439,21 +439,21 @@ public class EventLogger {
      * @param category
      * @param itemName
      */
-    public void logPurchase(final @Nullable String category, final @NonNull String itemName) {
-        Timber.d("Log purchase event, category=%s, name=%s", category, itemName);
-        if (!enabled) return;
-
-        try {
-            if (firebaseAnalytics != null) {
-                Bundle bundle = new Bundle();
-                if (!TextUtils.isEmpty(category))
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, itemName);
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ECOMMERCE_PURCHASE, bundle);
-            }
-        } catch (Exception ignored) {
-        }
-    }
+//    public void logPurchase(final @Nullable String category, final @NonNull String itemName) {
+//        Timber.d("Log purchase event, category=%s, name=%s", category, itemName);
+//        if (!enabled) return;
+//
+//        try {
+//            if (firebaseAnalytics != null) {
+//                Bundle bundle = new Bundle();
+//                if (!TextUtils.isEmpty(category))
+//                    bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, category);
+//                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, itemName);
+//                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.ECOMMERCE_PURCHASE, bundle);
+//            }
+//        } catch (Exception ignored) {
+//        }
+//    }
 
     /**
      * Log common event.
