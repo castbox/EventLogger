@@ -10,8 +10,6 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsConstants;
 import com.facebook.appevents.AppEventsLogger;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -32,6 +30,8 @@ import timber.log.Timber;
 public class EventLogger {
 
     private static EventLogger instance;
+
+    private EventLoggerBlocker blocker;
 
     public static EventLogger getInstance() {
         if (instance == null) {
@@ -121,6 +121,12 @@ public class EventLogger {
         // firebase analytics
         enableFirebaseAnalytics = true;
         return this;
+    }
+
+    public void setBlocker(EventLoggerBlocker blocker) {
+        if(blocker != null && blocker.enable()){
+            this.blocker = blocker;
+        }
     }
 
     public EventLogger enableFacebookAnalytics() {
@@ -453,6 +459,10 @@ public class EventLogger {
         Timber.d("Log event: event name=%s, category=%s, itemName=%s, value=%d, extendSession=%s.", eventName, category, itemName, value, String.valueOf(extendSession));
         if (!enabled) return;
 
+        if(blocker!=null && blocker.blockEventByName(eventName)){
+            return;
+        }
+
         try {
             if (firebaseAnalytics != null) {
                 Bundle bundle = createBundle(extra);
@@ -496,6 +506,10 @@ public class EventLogger {
         boolean extendSession = eventLoggerCallback != null && eventLoggerCallback.needExtendSession(eventName, category);
         Timber.d("Log event: event name=%s, category=%s, %s=%s, extendSession=%s", eventName, category, isItem ? "itemId" : "itemName", itemName, String.valueOf(extendSession));
         if (!enabled) return;
+
+        if(blocker!=null && blocker.blockEventByName(eventName)){
+            return;
+        }
 
         try {
             if (firebaseAnalytics != null) {
@@ -565,6 +579,10 @@ public class EventLogger {
     public void setUserProperty(final @NonNull String key, final @Nullable String value) {
         Timber.d("Log event: set user property %s=%s", key, value);
         if (!enabled) return;
+
+        if(blocker!=null && blocker.blockUserPropertiesByName(key)){
+            return;
+        }
 
         try {
             if (firebaseAnalytics != null) {
