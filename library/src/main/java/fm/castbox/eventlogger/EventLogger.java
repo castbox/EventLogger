@@ -580,10 +580,6 @@ public class EventLogger {
         Timber.d("Log event: set user property %s=%s", key, value);
         if (!enabled) return;
 
-        if(blocker!=null && blocker.blockUserPropertiesByName(key)){
-            return;
-        }
-
         try {
             if (firebaseAnalytics != null) {
                 firebaseAnalytics.setUserProperty(key, value);

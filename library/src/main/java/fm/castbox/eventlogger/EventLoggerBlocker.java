@@ -5,6 +5,4 @@ public interface EventLoggerBlocker {
 
     boolean blockEventByName(String eventName);
 
-    boolean blockUserPropertiesByName(String propertyName);
-
 }
