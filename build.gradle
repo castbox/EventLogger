@@ -2,31 +2,28 @@
 
 buildscript {
     repositories {
-        jcenter()
         google()
+        mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/public" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:7.3.1'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
-        classpath 'com.google.gms:google-services:3.1.0'
+        classpath 'com.google.gms:google-services:4.3.15'
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
-    }
-}
+// 仓库配置已移至settings.gradle
 
 project.ext {
-    compileSdkVersion = 26
-    buildToolsVersion = '26.0.2'
-    minSdkVersion = 16
-    targetSdkVersion = 25
-    firebaseVersion = '11.8.0'
-    installreferrerVersion = '1.1'
+    compileSdkVersion = 33
+    buildToolsVersion = '33.0.2'
+    minSdkVersion = 21
+    targetSdkVersion = 33
+    firebaseVersion = '21.2.0'
+    installreferrerVersion = '2.2'
 }
 
 task clean(type: Delete) {

@@ -1,1 +1,16 @@
+rootProject.name = 'EventLogger'
+
+// 为所有项目设置仓库
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://oss.jfrog.org/libs-snapshot" }
+        maven { url "https://maven.aliyun.com/repository/public" }
+    }
+}
+
 include ':library'

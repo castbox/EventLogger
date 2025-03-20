@@ -1,19 +1,27 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 
-repositories {
-    jcenter()
-    mavenCentral()
-}
+// 仓库配置已移至settings.gradle
 
 android {
-    compileSdkVersion rootProject.compileSdkVersion
-    buildToolsVersion rootProject.buildToolsVersion
+    namespace 'fm.eventlogger'
+    compileSdkVersion 33 // 直接指定compileSdkVersion
+    buildToolsVersion '33.0.2' // 直接指定buildToolsVersion
     defaultConfig {
-        minSdkVersion rootProject.minSdkVersion
-        targetSdkVersion rootProject.targetSdkVersion
+        minSdkVersion 21 // 直接指定minSdkVersion
+        targetSdkVersion 33 // 直接指定targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
     buildTypes {
         release {
             minifyEnabled false
