@@ -46,8 +46,7 @@ public class CampaignTrackingReceiver extends BroadcastReceiver {
                                 String url = response.getInstallReferrer();
 
                                 if (!TextUtils.isEmpty(url)) {
-                                    EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_REFERRER_KEY, url);
-                                    EventLogger.getInstance().setCampaignParams(url);
+                                    reportInstallReferrer(url);
                                     Timber.d("referrer = " + url);
                                 }
 
@@ -78,6 +77,12 @@ public class CampaignTrackingReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // Apps with asynchronous analytics initialization can dispatch through their own queue.
+    protected void reportInstallReferrer(String url) {
+        EventLogger.getInstance().logEvent(PLAY_STORE, PLAY_STORE_REFERRER_KEY, url);
+        EventLogger.getInstance().setCampaignParams(url);
     }
 
     private static String bundle2string(Bundle bundle) {
