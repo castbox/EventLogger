@@ -284,20 +284,27 @@ public class EventLogger {
      * @param screenName screen name, i.e. fragment class name.
      */
     public synchronized void logScreen(@NonNull Activity activity,  @NonNull String screenName) {
+        logScreen(activity, screenName, System.currentTimeMillis());
+    }
+
+    // Queued visits still count after their Activity has been destroyed.
+    public synchronized void logScreen(@Nullable Activity activity, @NonNull String screenName, long timestamp) {
         Timber.d("Log screen view, screen=%s.", screenName);
         // Last event hasn't called logScreenPause, do it first
         if (lastScreenLogTime != 0) {
-            logScreenPause(this.screenName);
+            logScreenPause(this.screenName, timestamp);
         }
         this.screenName = screenName;
-        lastScreenLogTime = System.currentTimeMillis();
+        lastScreenLogTime = timestamp;
 
         if (!enabled) return;
 
         try {
             if (firebaseAnalytics != null) {
                 // screen_view event
-                firebaseAnalytics.setCurrentScreen(activity, screenName, null);
+                if (activity != null) {
+                    firebaseAnalytics.setCurrentScreen(activity, screenName, null);
+                }
 
                 // screen event
                 Bundle bundle = new Bundle();
@@ -314,8 +321,12 @@ public class EventLogger {
     }
 
     public synchronized void logScreenPause(final String screenName) {
+        logScreenPause(screenName, System.currentTimeMillis());
+    }
+
+    public synchronized void logScreenPause(final String screenName, long timestamp) {
         if (TextUtils.equals(this.screenName, screenName)) {
-            long duration = System.currentTimeMillis() - lastScreenLogTime;
+            long duration = timestamp - lastScreenLogTime;
             if (duration > 0 && duration <= 30 * 60 * 1000) // 0 < duration <= 30 minutes
                 logScreenLife(screenName, duration);
             this.screenName = null;
